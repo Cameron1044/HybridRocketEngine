@@ -153,7 +153,7 @@ plt.title('Mass of N20 vs. Time')
 plt.xlabel('Time [s]')
 plt.ylabel('Mass of N2O [kg]')
 plt.legend(['Mass of N2O gas', 'Mass of N2O liquid'])
-plt.show()
+plt.show() # chris kongy boy
 
 plt.figure()
 plt.grid(True)
