@@ -37,7 +37,7 @@ grain_radius = Dint/2                           # Paraffin grain radius, m
 "OXIDISER PARAMETERS" 
 oxpressure = 1956000
 oxden = 25.11
-i_ox_mass = 0.350 #Initial oxidisen mass, Kg
+i_ox_mass = 0.350                               #Initial oxidisen mass, Kg
 
 "REGRESSION PARAMETERS" 
 a = 1.32*10**(-5)
@@ -103,6 +103,8 @@ for i in range(len(mass_nitrous) - 1):
         n2o_mass_flow_rate.append((mass_nitrous[1] - mass_nitrous[i - 1])/(t[i]-t[i-1]))
 a_n20 = linregress(t, mass_nitrous[0:len(t)])[0] # Average N20 flow rate 
 
+#### Plotting outcomes ####
+# Plotting Oxidizer vs Time
 plt.figure(1)
 plt.plot(t, consumed_liquid[0:len(t)])
 plt.xlabel('Time (s)')
@@ -111,6 +113,7 @@ plt.title('Mass of N20 vs Time')
 plt.grid(True)
 plt.show()
 
+# Plotting Chamber Pressure vs Time
 plt.figure(2)
 plt.plot(t, chamber_pressure[0:len(t)])
 plt.xlabel('Time (s)')
@@ -119,6 +122,7 @@ plt.title('Chamber Pressure vs Time')
 plt.grid(True)
 plt.show()
 
+# Plotting Solid Fuel Grain Radius vs Time
 plt.figure(3)
 plt.plot(t, grain_radius[0:len(t)])
 plt.xlabel('Time (s)')
@@ -127,6 +131,7 @@ plt.title('Grain Radius vs Time')
 plt.grid(True)
 plt.show()
 
+# Plotting Engine Thrust vs Time
 plt.figure(4)
 plt.plot(t, thrust[0:len(t)])
 plt.xlabel('Time (s)')
@@ -135,6 +140,7 @@ plt.title('Thrust vs Time')
 plt.grid(True)
 plt.show()
 
+# Plotting Thrust Coefficient vs Time
 plt.figure(5)
 plt.plot(t, cf[0:len(t)])
 plt.xlabel('Time (s)')
@@ -143,6 +149,7 @@ plt.title('Thrust Coefficient vs Time')
 plt.grid(True)
 plt.show()
 
+# Plotting Oxidizer Flow Rate vs Time
 plt.figure(6)
 plt.plot(t, n2o_mass_flow_rate[0:len(t)])
 plt.xlabel('Time (s)')
