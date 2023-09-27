@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 # Constants 1
 m_loaded = 19.32933  # N2O mass initially loaded into tank [kg]: Test 1
 V = 0.0354  # total tank volume [m**3]
-
+# krivi
 
 Ti = 286.5  # initial temperature [K]: Test 1
 V = 0.0354  # total tank volume [m**3]
