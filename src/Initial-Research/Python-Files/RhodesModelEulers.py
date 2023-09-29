@@ -61,7 +61,7 @@ for i in range(0,int(i_f)):
     dm_ox_dt = Cd * A * np.sqrt(2 * rho_ox * (p_ox - p_chmb) * 32.2 * 12)
     dV_dt = dm_ox_dt / rho_ox * tstep
     V_ox_gas = V_ox_gas + dV_dt
-    dr_dt = a * (dm_ox_dt / A_port)**n
+    dr_dt = a * (dm_ox_dt / A_port)**n #regression
 
     r = r + dr_dt*tstep
 
