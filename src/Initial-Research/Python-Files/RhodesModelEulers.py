@@ -22,7 +22,6 @@ Ru = 8.314
 T = 3059
 M = 28.811
 
-
 # Constants
 A = n_holes*np.pi*(phi/2)**2 #Area of injection hole | in^2
 mdot_ox0 = Cd*A*np.sqrt(2*rho_ox*(p_ox - p_chmb)*32.2*12) #Initial mass flow rate of oxidizer | lb/s
@@ -96,5 +95,5 @@ plt.figure()
 plt.grid(True)
 plt.plot(t_arr, thrust_choked_arr)
 plt.xlabel('Time (s)')
-plt.ylabel('P_chmb (psi)')
+plt.ylabel('Thrust (psi)')
 plt.show()
