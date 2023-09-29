@@ -19,7 +19,7 @@ d_t = 0.23 #Throat diameter | inches
 gamma = 1.249
 cd_throat = 0.2
 Ru = 8.314
-T = 3059
+T = 3059 #1
 M = 28.811
 
 # Constants
