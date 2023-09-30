@@ -11,11 +11,11 @@ If you already have an SSH key and have linked it with GitHub, you can skip this
 ### VS Code Setup
 *Suggested Extensions: Python, MATLAB, Rainbow CSV*
 
-## Clone this repository and set up a virtual environment for Python version 3.11. If you don't have it then you can install [here](https://www.python.org/downloads/)
+#### Clone this repository and set up a virtual environment for Python version 3.11. If you don't have it then you can install [here](https://www.python.org/downloads/)
 
 ```python3.11 -m venv env``` (MacOS) or ```python -m venv env``` (Windows)
 
-## Open a Python Virtual Environment
+#### Open a Python Virtual Environment
 
 MacOS
 ```source env/bin/activate```
@@ -26,6 +26,6 @@ Windows
 To deactivate a virtual Environment
 ```deactivate```
 
-## Download the required packages
+#### Download the required packages
 
 ```pip install -r requirements.txt```
