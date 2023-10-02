@@ -20,27 +20,29 @@ If you already have an SSH key and have linked it with GitHub, you can skip this
 #### VS Code Download: [link](https://code.visualstudio.com/download)  
 #### Python3.11 Download [here](https://www.python.org/downloads/)
 
- - #### Clone Repository
-   In GitHub Repository -> <> Code -> Copy SSH Link
-   In VS Code -> Welcome Page -> Clone Git Repository... -> Paste SSH Link -> Select Directory
+ - #### Clone Repository  
+   In GitHub Repository -> <> Code -> Copy SSH Link  
+   In VS Code -> Welcome Page -> Clone Git Repository... -> Paste SSH Link -> Select Directory  
 
  - #### Setup Git Config for Local Machine
    In VS Code -> Terminal -> New Terminal  
-   `git config --global user.name "Your Name"`   
-   `git config --global user.email "you@example.com"`   
+   MacOS & Windows: `git config --global user.name "Your Name"`   
+   MacOS & Windows: `git config --global user.email "you@example.com"`   
 
- - #### Create Virtual Environment  
-   MacOS Terminal: `python3.11 -m venv env`  
-   Windows PowerShell: `python -m venv env`  
+ - #### Create Virtual Environment
+   In VS Code -> Terminal -> New Terminal  
+   MacOS: `python3.11 -m venv env`  
+   Windows: `python -m venv env`  
 
- - #### Activate Virtual Environment  
-   MacOS Terminal: `source env/bin/activate`  
-   Windows PowerShell: `env\Scripts\activate.bat`  
+ - #### Activate Virtual Environment
+   In VS Code -> Terminal -> New Terminal  
+   MacOS: `source env/bin/activate`  
+   Windows: `env\Scripts\activate.bat`  
 
- - #### Deactivate Virtual Environment  
-   MacOS Terminal: `deactivate`  
-   Windows PowerShell: `deactivate`  
+ - #### Deactivate Virtual Environment
+   In VS Code -> Terminal -> New Terminal   
+   MacOS & Windows: `deactivate`  
 
  - #### Download the required packages
-   MacOS Terminal: `pip install -r requirements.txt`  
-   Windows PowerShell: `pip install -r requirements.txt`  
+   In VS Code -> Terminal -> New Terminal  
+   MacOS & Windows: `pip install -r requirements.txt`   
