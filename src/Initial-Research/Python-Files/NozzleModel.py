@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 mp = 0
 C_str = 0
 Pc = 0
+mo = 0
 
-
-def Nozzle_Characteristics()
+def Nozzle_Characteristics():
     At = ((mp+mo)*C_str)/Pc
 
 
