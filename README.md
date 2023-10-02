@@ -25,7 +25,8 @@ If you already have an SSH key and have linked it with GitHub, you can skip this
    In VS Code -> Welcome Page -> Clone Git Repository... -> Paste SSH Link -> Select Directory  
 
  - #### Setup Git Config for Local Machine
-   In VS Code -> Terminal -> New Terminal  
+   In VS Code -> Terminal -> New Terminal
+   MacOS & Windows: `git config pull.rebase false`   
    MacOS & Windows: `git config --global user.name "Your Name"`   
    MacOS & Windows: `git config --global user.email "you@example.com"`   
 
