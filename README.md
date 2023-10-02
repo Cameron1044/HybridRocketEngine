@@ -17,8 +17,8 @@ If you already have an SSH key and have linked it with GitHub, you can skip this
 ## VS Code Setup
 *Suggested Extensions: Python, MATLAB, Rainbow CSV*
 
-#### VS Code Download: [link](https://code.visualstudio.com/download)  
-#### Python3.11 Download [here](https://www.python.org/downloads/)
+#### VS Code Download: [Link](https://code.visualstudio.com/download)  
+#### Python3.11 Download: [Link](https://www.python.org/downloads/)
 
  - #### Clone Repository  
    In GitHub Repository -> <> Code -> Copy SSH Link  
