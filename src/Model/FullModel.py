@@ -1,17 +1,24 @@
-#Converted IdealLiquidModel.m to Python
+## Converted IdealLiquidModel.m to Python
+## One diemnsional, unsteady compressible flow
 import numpy as np
 import math as m
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
-# Constants 1
-m_loaded = 19.32933                     # N2O mass initially loaded into tank [kg]: Test 1
-V = 0.0354                              # total tank volume [m**3]
-Ti = 286.5                              # initial temperature [K]: Test 1
+" DIMENSIONS OF ENGINE "
+## Tank
+m_loaded = 19.32933                     # N2O mass initially loaded into oxidizer tank [kg]: Test 1
+V = 0.0354                              # total oxidizer tank volume [m**3]
+## Combustion Chamber
+A = 0.1                                 # Area of Injector Holes
+V_chmb = 0.0400                         # total combustion chamber volume [m**3]
+## Nozzle
+d_t = 0.23                              # Throat diameter []
 
-
+" OXIDIZER TANK CHEMICAL PROPERTIES "
 R = 8314.3                              # universal gas constant [J/(kmol*K)]
-MW2 = 44.013                            # molecular weight of N2O
+MW2 = 44.013                            # molecular weight of N2O [g / mol]
+rho_ox = 1.9781                         # Liquid Nitroux Oxide at 273K [kg/m³]
 # Perry's Chemical Engineers' Handbook Property Equations
 G1 = 96.512                             # vapor pressure of N2O [Pa] coefficients
 G2 = -4045                              # valid for Temp range [182.3 K - 309.57 K]
@@ -24,7 +31,17 @@ Q2 = 0.27244
 Q3 = 309.57
 Q4 = 0.2882
 
-### Calculating Initial Conditions ###
+" Fuel Grain "
+L = 25                                  # Fuel Port Length []
+r_port0 = 0.25                          # Initial fuel port radius []
+a = 0.7                                 # Burn rate coefficient [scalar]
+n = 0.8                                 # Pressure exponent [scalar]
+rho_fuel = 0.0421                       # Density of Fuel Grain []
+
+"-------- START VALUES ---------"
+Ti = 286.5                              # initial temperature [K]: Test 1
+
+### Calculating Initial Conditions of Oxidizer Tank ###
 n_to = m_loaded / MW2                                                   # initial total N2O in tank [kmol]
 Vhat_li = Q2**(1 + (1 - Ti / Q3)**Q4) / Q1                              # molar volume of liquid N2O [m**3/kmol]
 To = Ti                                                                 # initial temperature [K]
@@ -32,37 +49,43 @@ P_sato = np.exp(G1 + G2 / To + G3 * np.log(To) + G4 * To**G5)           # initia
 n_go = P_sato * (V - Vhat_li * n_to) / (-P_sato * Vhat_li + R * To)     # initial N2O gas [kmol]
 n_lo = (n_to * R * To - P_sato * V) / (-P_sato * Vhat_li + R * To)      # initial N2O liquid [kmol]
 
-# Initial Conditions passed into ode45 state vector
-y0 = [Ti, n_go, n_lo]
+### Calculating Initial Conditions of Combustion Chamber ###
+A_port = 2 * np.pi * r_port0 * L                                        # Initial Fuel Grain exposed area
+r = r_port0                                                             # Initial radius of Fuel Grain
 
+# Initial Conditions passed into ode45 state vector
+y0 = [Ti, n_go, n_lo, r]
+
+"-------- FUNCTIONS ---------"
 ### Defining events (If the events were to be come true, stop the ode34 function) ###
 def event1(t, y):
-    To, n_go, n_lo = y
-    _, _, _, Pe, P = tank_system(t, To, n_go, n_lo)
-    return Pe - P
+    To, n_go, n_lo, r = y
+    _, _, _, _, P_chmb, P = tank_system(t, To, n_go, n_lo, r)
+    return P_chmb - P
 
 event1.terminal = True
     # Event1 : Checks to see if Tank pressure and Chamber pressure are equal. When 0 stop
 
 def event2(t, y):
-    _, _, n_lo = y
+    _, _, n_lo, _ = y
     return n_lo
 
 event2.terminal = True
     # Event2 : Checks to see if the N20 Liquid mass in tank = 0
 
+" SYSTEM OF EQUATIONS "
 def odefun(t, y):
     # Set Initial conditions
-    To, n_go, n_lo = y
+    To, n_go, n_lo, r = y
     # Call ode45
-    dT, dn_g, dn_l, _, _ = tank_system(t, To, n_go, n_lo)
+    dT, dn_g, dn_l, dr, _ , _ = tank_system(t, To, n_go, n_lo, r)
     # Return changes in temperature, ullage gas, and liquid N20
-    return [dT, dn_g, dn_l]
+    return [dT, dn_g, dn_l, dr]
 
 
-def tank_system(t, To, n_go, n_lo):
+def tank_system(t, To, n_go, n_lo, r):
     # Curve fitted combustion chamber pressure [Pa]:
-    Pe = -2924.42 * t**6 + 46778.07 * t**5 - 285170.63 * t**4 + 813545.02 * t**3 - 1050701.53 * t**2 + 400465.85 * t + 1175466.2  # Test 1
+    P_chmb = -2924.42 * t**6 + 46778.07 * t**5 - 285170.63 * t**4 + 813545.02 * t**3 - 1050701.53 * t**2 + 400465.85 * t + 1175466.2  # Test 1
     # Pe = 101325
 
     ### Given Constants ###
@@ -73,7 +96,9 @@ def tank_system(t, To, n_go, n_lo):
     m_T = 6.4882                    # tank mass [kg]
     R = 8314.3                      # universal gas constant [J/(kmol*K)]
     MW2 = 44.013                    # molecular weight of N2O
+
     # Perry's Chemical Engineers' Handbook Property Equations
+        # Temperature-dependent formulae which calculate specific heat capacities changes due to temperature
     G1 = 96.512                     # vapor pressure of N2O [Pa] coefficients
     G2 = -4045                      # valid for Temp range [182.3 K - 309.57 K]
     G3 = -12.277
@@ -109,7 +134,7 @@ def tank_system(t, To, n_go, n_lo):
     Q3 = 309.57
     Q4 = 0.2882
 
-    ### BLOWDOWN CALCULATIONS ###
+    " BLOWDOWN CALCULATIONS "
     # Given functions of temperature:
     Vhat_l = Q2**(1+(1-To/Q3)**Q4)/Q1                                                                   # molar specific volume of liquid N2O [m^3/kmol]
 
@@ -123,14 +148,14 @@ def tank_system(t, To, n_go, n_lo):
     delta_Hv = J1*(1 - Tr) ** (J2 + J3*Tr + J4*Tr**2)                                                   # heat of vaporization of N2O [J/kmol]
     P_sat = np.exp(G1 + G2/To + G3*np.log(To) + G4*To**G5)                                              # vapor pressure of N20 [Pa]
     dP_sat = (-G2/(To**2) + G3/To + G4*G5*To**(G5-1)) * np.exp(G1 + G2/To + G3*np.log(To) + G4*To**G5)  # derivative of vapor pressure with respect to temperature
-    Cp_T = (4.8 + 0.00322*To)*155.239                                                                   # specific heat of tank, Aluminum [J/(kg*K)]
+    Cp_T = (4.8 + 0.00322*To)*155.239                                                                   # specific heat of oxidizer tank, Aluminum [J/(kg*K)]
     
     ## Simplified expression definitions for solution
-    P = (n_He + n_go)*R*To / (V - n_lo*Vhat_l)
+    P = (n_He + n_go)*R*To / (V - n_lo*Vhat_l)                                                          # Calculating Oxidizer Tank Pressure
     a = m_T*Cp_T + n_He*CVhat_He + n_go*CVhat_g + n_lo*CVhat_l
     b = P*Vhat_l
     e = -delta_Hv + R*To
-    f = -Cd*Ainj*np.sqrt(2/MW2)*np.sqrt((P-Pe)/Vhat_l)
+    f = -Cd*Ainj*np.sqrt(2/MW2)*np.sqrt((P-P_chmb)/Vhat_l)
     j = -Vhat_l*P_sat
     k = (V - n_lo*Vhat_l)*dP_sat
     m = R*To
@@ -144,7 +169,26 @@ def tank_system(t, To, n_go, n_lo):
     dn_g = Z
     dn_l = W
 
-    return dT, dn_g, dn_l, Pe, P
+    " Calculating Combustion Chamber "
+    # Calculating oxidizer mass flow
+    dm_ox = Cd * A * np.sqrt(2 * rho_ox * (P - P_chmb))
+
+    ## Calculating Fuel Grain Regression
+    A_port1 = 2 * np.pi * r * L
+    dr = a * (dm_ox / A_port1)**n
+    r = r + (dr * t)
+
+    # Calculating fuel mass flow rate
+    A_port = 2 * np.pi * r * L
+    m_fuel = dr * t * A_port * rho_fuel
+
+    # Calculating combustion chamber mass
+    m_chmb = m_fuel + (dm_ox * t)
+    rho_chmb = m_chmb / V_chmb
+
+    # Returns
+    # Change in Temperature [K], Mass of Nitrous Oxide Gas [kg], Mas of Nitrous Oxide Liquid [kg], Chamber Pressure [Pa], Tank Pressure [Pa]
+    return dT, dn_g, dn_l, dr, P_chmb, P
 
 ### Solve the ODE system using solve_ivp (Initial Value Problem) ###
 # Note: t_eval=np.linspace(0, 10, 500) will have 500 evenlyspaced time steps from 0 to 10 seconds
@@ -156,15 +200,19 @@ sol = solve_ivp(odefun, [0, 10], y0, events=[event1, event2], t_eval=np.linspace
 T = sol.y[0]                # Temperature over Time
 n_g = sol.y[1]              # Mass of Nitrous Oxide Gas over Time
 n_l = sol.y[2]              # Mass of Nitrous Oxide Liquid over Time
+r = sol.y[3]                # Radius of Fuel Grain over Time
 
-# Calculating pressure over time (sol.t)
-Pe = np.zeros(len(sol.t))
+## Calculating pressure over time (sol.t)
+# Creating vectors of zeros the length of time
+P_chmb = np.zeros(len(sol.t))
 P = np.zeros(len(sol.t))
+
+# Iterating through the tank_system to back out P_chmb and P
 for i, ti in enumerate(sol.t):
-    _, _, _, Pe[i], P[i] = tank_system(ti, T[i], n_g[i], n_l[i])
+    _, _, _, _, P_chmb[i], P[i] = tank_system(ti, T[i], n_g[i], n_l[i], r[i])
 
 
-### Plotting ###
+"-------- PLOTTING ---------"
 plt.figure()
 plt.grid(True)
 plt.plot(sol.t, T, 'r', linewidth=2)
@@ -186,7 +234,7 @@ plt.show()
 plt.figure()
 plt.grid(True)
 plt.plot(sol.t, P/6895, 'm', linewidth=2)
-plt.plot(sol.t, Pe/6895, 'c', linewidth=2)
+plt.plot(sol.t, P_chmb/6895, 'c', linewidth=2)
 plt.title('Pressure vs. Time')
 plt.xlabel('Time [s]')
 plt.ylabel('Pressure [PSI]')
