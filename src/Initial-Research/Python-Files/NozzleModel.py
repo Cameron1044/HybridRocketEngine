@@ -40,4 +40,6 @@ def Nozzle_Characteristics(mdot,C_str,Pc,Pe,AeoAt,alpha):
 def CalculateThrust(mdot,Ve, Ae, Pe):
     T = (mdot * Ve / gc) + ((Pe - Pa) * Ae)
  # Currently missing Pe, the exit pressure at the end of the nozzle. May very well be a problem like the nozzle problems from aero :/
-    return T #Thrust is returned
+    return T #Thrust is returned, to be used to develop thrust profile
+
+# Plot Thrust Profile? 
