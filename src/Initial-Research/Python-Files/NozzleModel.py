@@ -9,7 +9,7 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
 # Constants
-gamma = 1.4 #change to correct gamma
+gamma = 1.249 #change to correct gamma
 R = 8.3144 #J/mol*k
 Pa = 0 # Ambient Pressure
 mp = 0 #mass flow of propellant 
