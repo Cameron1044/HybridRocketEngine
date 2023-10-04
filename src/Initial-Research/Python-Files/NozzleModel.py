@@ -46,4 +46,5 @@ def CalculateThrust(mdot,Ve, Ae, Pe):
  # Currently missing Pe, the exit pressure at the end of the nozzle. May very well be a problem like the nozzle problems from aero :/
     return T #Thrust is returned, to be used to develop thrust profile
 
+# test
 # Plot Thrust Profile? 
