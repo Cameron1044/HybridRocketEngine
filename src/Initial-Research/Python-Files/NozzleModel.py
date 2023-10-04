@@ -20,7 +20,7 @@ Pe = 0 #exit pressure assumed to be ambient pressure for perfectly expanded nozz
 Tc = 0; #chamber temperature same as total temperature Tt in nozzle
 
 # Function to define nozzle geometry:
-def Nozzle_Characteristics(mdot,C_str,Pc,Pe,AeoAt,alpha):
+def Nozzle_Characteristics(mdot,C_str,Pc,Pe,Dc, AeoAt,alpha,beta):
     At = (mdot*C_str)/Pc # Calculates optimal throat area given mass flow rate, characteristic velcoity, and chamber pressure
     
     Me = np.sqrt((2/(gamma-1))*((Pc/Pe)**((gamma-1)/gamma)-1))
@@ -32,8 +32,9 @@ def Nozzle_Characteristics(mdot,C_str,Pc,Pe,AeoAt,alpha):
     re = np.sqrt(Ae/np.pi) # Determines exit radius based on exit area
     Dt = 2 * rt # Throat Diameter
     De = 2 * re # Exit Diameter
-    Length_cone = (0.5 * (De - Dt)) / (np.tan(alpha)) # Calculate cone length
-    return At, rt, Length_cone, Ae,Dt,De,Length_cone,Me,Te,Pthr
+    Length_cone = (0.5 * (De - Dt)) / (np.tan(alpha)) # Calculate cone length parallel to x axis
+    Length_diff = (0.5 * (Dc - Dt)) / (np.tan(beta)) #calculate lenght of diffuser parallel to x axis
+    return At, rt, Length_cone, Ae,Dt,De,Length_cone,Me,Te,Pthr, Length_diff
 
 # Function to predict thrust performance w/ nozzle geometry
 def CalculateThrust(mdot,Ve, Ae, Pe):
