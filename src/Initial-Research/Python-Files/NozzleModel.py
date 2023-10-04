@@ -1,6 +1,8 @@
 # File for Nozzle Model
 # being given an array of each time step for champer pressure, mass flow rate of fuel and oxidizer, tank pressure, temperature of tank and chamber
 
+# https://www.sciencedirect.com/science/article/pii/S2405844018374164  justification for using alpha =15 and beta =45
+
 import numpy as np
 import math as m
 from scipy.integrate import solve_ivp
@@ -8,7 +10,7 @@ import matplotlib.pyplot as plt
 
 # Constants
 gamma = 1.4 #change to correct gamma
-gc = 32.2 # [ft/s^2] - Gravitational constant ONLY USE IF NOT WORKING IN SI UNITS
+R = 8.3144 #J/mol*k
 Pa = 0 # Ambient Pressure
 mp = 0 #mass flow of propellant 
 mo = 0 #mass flow of oxidizer
@@ -16,6 +18,7 @@ C_str = 0 #characteristic velocity
 Pc = 0 #Chamber Pressure and can be total pressure Pt for nozzle stations
 mdot = mo + mp #mass flow of oxidizer and propellant
 alpha = 15 # [Degrees] - typical half cone angle for majority of nozzle designs
+beta = 45 #degrees -typical converging angle for nozzle diffuser
 Pe = 0 #exit pressure assumed to be ambient pressure for perfectly expanded nozzle
 Tc = 0; #chamber temperature same as total temperature Tt in nozzle
 
@@ -34,11 +37,12 @@ def Nozzle_Characteristics(mdot,C_str,Pc,Pe,Dc, AeoAt,alpha,beta):
     De = 2 * re # Exit Diameter
     Length_cone = (0.5 * (De - Dt)) / (np.tan(alpha)) # Calculate cone length parallel to x axis
     Length_diff = (0.5 * (Dc - Dt)) / (np.tan(beta)) #calculate lenght of diffuser parallel to x axis
-    return At, rt, Length_cone, Ae,Dt,De,Length_cone,Me,Te,Pthr, Length_diff
+    Ve = Me*np.sqrt(gamma*R*Te)
+    return At, rt, Length_cone, Ae,Dt,De,Length_cone,Me,Te,Pthr, Length_diff,Ve
 
 # Function to predict thrust performance w/ nozzle geometry
 def CalculateThrust(mdot,Ve, Ae, Pe):
-    T = (mdot * Ve / gc) + ((Pe - Pa) * Ae)
+    T = (mdot * Ve) + ((Pe - Pa) * Ae)
  # Currently missing Pe, the exit pressure at the end of the nozzle. May very well be a problem like the nozzle problems from aero :/
     return T #Thrust is returned, to be used to develop thrust profile
 
