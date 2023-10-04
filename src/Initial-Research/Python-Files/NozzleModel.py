@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 # Constants
 gamma = 1.249 #change to correct gamma
 R = 8.3144 #J/mol*k
-Pa = 0 # Ambient Pressure
+Pa = 0 # Ambient Pressure in Boulder, Colorado
 mp = 0 #mass flow of propellant 
 mo = 0 #mass flow of oxidizer
 C_str = 0 #characteristic velocity
