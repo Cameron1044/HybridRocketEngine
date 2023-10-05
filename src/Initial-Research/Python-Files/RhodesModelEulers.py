@@ -50,7 +50,7 @@ V_ox_gas = V_ox_gas0
 "----- CALCULATIONS -----"
 # Time Step
 tf=100                          # final time [s]
-tstep=0.05                      # time step [s]
+tstep=0.031                      # time step [s]
 i_f=tf/tstep
 
 # Initial derivatives
@@ -108,7 +108,7 @@ for i in range(0,int(i_f)):
     # Calculating thrust
     thrust_choked = mdot_exit_choked * v_exit / 32.2
     thrust_choked_arr.append(thrust_choked)
-    # print(dm_ox_dt, dV_dt, r, p_chmb, thrust_choked)
+    print(i*tstep, dm_ox_dt, dV_dt, r, p_chmb, thrust_choked)
 # End of For Loop
 
 "----- Plotting -----"
