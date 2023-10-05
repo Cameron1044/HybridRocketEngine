@@ -1,6 +1,7 @@
 import numpy as np
 import math as m
 import matplotlib.pyplot as plt
+from chemicalProperties import ChemicalProperties
 
 "----- Inital Conditions -----"
 "Oxidizer Tank - Liquid Nitroux Oxide"
@@ -18,6 +19,8 @@ n_gas = 0.000125                        # Initial mass of Ullage gas | [kmol]
 P_ox = 2300 * 6895                      # Initial pressume of the oxidizer tank | [Psi --> Pa]
 Ti_tank = 286.5                         # Initial temperature of the oxidizer tank | K
 m_T = 6.4882;                           # Oxidizer tank mass [kg]
+
+chem = ChemicalProperties(gas="He", mass_loaded=m_loaded, tank_volume=V_tank, initial_temp=Ti_tank)
 
 "Injector"
 Cd = 0.175                              # Coefficient of Discharge, Injector | dimensionless
@@ -43,53 +46,13 @@ a = a_i * conversion_factor_a           # Burn rate coefficient | [m/s]
 d_t = 0.23 / 39.37                      # Nozzle Throat diameter | [in --> m]
 cd_throat = 0.2                         # Coefficient of Discharge of Nozzle Throat | dimensionless
 
-"----- Chemical Properties -----"
-# N20 Vapor
-G1 = 96.512                             # vapor pressure of N2O [Pa] coefficients
-G2 = -4045                              # valid for Temp range [182.3 K - 309.57 K]
-G3 = -12.277
-G4 = 2.886e-5
-G5 = 2
-
-D1 = 0.2934e5                           # heat capacity of N2O gas at constant pressure [J/(kmol*K)] coefficients
-D2 = 0.3236e5                           # valid for Temp range [100 K - 1500 K]
-D3 = 1.1238e3
-D4 = 0.2177e5
-D5 = 479.4
-
-Tc = 309.57                             # critical temperature of N2O [K]
-J1 = 2.3215e7                           # heat of vaporization of N2O [J/kmol] coefficients
-J2 = 0.384                              # valid for Temp range [182.3 K - 309.57 K]
-J3 = 0
-J4 = 0
-# Helium
-C1 = 0.2079e5                           # heat capacity of He at constant pressure [J/(kmol*K)] coefficients
-C2 = 0                                  # valid for Temp range [100 K - 1500 K]
-C3 = 0                                  # Same heat capacity as Argon Page 182 or PDFPage 207
-C4 = 0
-C5 = 0
-# N20 Liquid
-Q1 = 2.781                              # molar specific volume of liquid N2O [m**3/kmol] coefficients
-Q2 = 0.27244
-Q3 = 309.57
-Q4 = 0.2882
-E1 = 6.7556e4                           # heat capacity of N2O liquid at constant pressure [J/(kmol*K)] coefficients
-E2 = 5.4373e1                           # valid for Temp range [182.3 K - 200 K]
-E3 = 0
-E4 = 0
-E5 = 0
 
 "----- Initial Calculations/Inputs -----"
 Ainj = n_holes * np.pi * (phi/2)**2                             # Area of injection holes | [m^2]
 
 # INITAL OXIDIZER TANK
-n_to = m_loaded / MW2                                           # initial total N2O in tank [kmol]
-Vhat_li = Q2**(1 + (1 - Ti_tank / Q3)**Q4) / Q1                 # molar volume of liquid N2O [m**3/kmol]
-To = Ti_tank                                                    # initial temperature [K]
-P_sato = np.exp(G1 + G2 / To + G3 * np.log(To) + G4 * To**G5)   # initial vapor pressure of N20 [Pa]
-n_go = P_sato * (V_tank - Vhat_li * n_to) / (-P_sato * Vhat_li + R * To)     # initial N2O gas [kmol]
-n_lo = (n_to * R * To - P_sato * V_tank) / (-P_sato * Vhat_li + R * To)      # initial N2O liquid [kmol]
-
+n_go, n_lo = chem.initialMoles()
+To = Ti_tank
 
 # INITIAL COMBUSTION CHAMBER
 A_t = np.pi*(d_t/2)**2                                          # Cross-sectional area of nozzle throat | [m^2]
@@ -119,20 +82,7 @@ n_go_arr = []
 for i in range(0,int(i_f)):
 
     "----- BLOWDOWN -----"
-    # Given functions of temperature:
-    Vhat_l = Q2**(1+(1-To/Q3)**Q4)/Q1                                                                   # molar specific volume of liquid N2O [m^3/kmol]
-
-    ## Calculating Specific Heats at Constant Volume
-    CVhat_He = C1 + C2*To + C3*To**2 + C4*To**3 + C5*To**4 - R                                          # specific heat of He [J/(kmol*K)]
-    CVhat_g = D1 + D2*((D3/To)/np.sinh(D3/To))**2 + D4*((D5/To)/np.cosh(D5/To))**2 - R                  # specific heat of N2O gas [J/(kmol*K)]
-    CVhat_l = E1 + E2*To + E3*To**2 + E4*To**3 + E5*To**4                                               # specific heat of N2O liquid [J/(kmol*K)]
-        # Note: At constant volume, approx. same as at constant pressure 
-
-    Tr = To/Tc # reduced temperature
-    delta_Hv = J1*(1 - Tr) ** (J2 + J3*Tr + J4*Tr**2)                                                   # heat of vaporization of N2O [J/kmol]
-    P_sat = np.exp(G1 + G2/To + G3*np.log(To) + G4*To**G5)                                              # vapor pressure of N20 [Pa]
-    dP_sat = (-G2/(To**2) + G3/To + G4*G5*To**(G5-1)) * np.exp(G1 + G2/To + G3*np.log(To) + G4*To**G5)  # derivative of vapor pressure with respect to temperature
-    Cp_T = (4.8 + 0.00322*To)*155.239                                                                   # specific heat of oxidizer tank, Aluminum [J/(kg*K)]
+    Vhat_l, CVhat_He, CVhat_g, CVhat_l, delta_Hv, P_sat, dP_sat, Cp_T = chem.chemicalStates(To)
 
     ## Simplified expression definitions for solution
     P = (n_gas + n_go)*R*To / (V_tank - n_lo*Vhat_l)                                                    # Calculating Oxidizer Tank Pressure
