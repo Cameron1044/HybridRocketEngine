@@ -72,10 +72,6 @@ for i in range(0,int(i_f)):
     if p_ox < p_chmb:
         break
 
-    # If gas volume takes up the volume of the oxidizer tank
-    if V_ox < V_ox_gas:
-        break 
-
     # Calculating Mass flow of Liquid Oxidizer
     dm_ox_dt = Cd * A * np.sqrt(2 * rho_ox * (p_ox - p_chmb) * 32.2 * 12)
     m_ox = dm_ox_dt*tstep
@@ -102,13 +98,13 @@ for i in range(0,int(i_f)):
     # Calculating Density of the combustion chamber
     rho_chmb = m_chmb / V_chmb
     # Calculating the chocked mass flow of the combustion chamber
-    mdot_exit_choked = cd_throat * A_t * np.sqrt(32.2*12*gamma*rho_chmb*p_chmb*(2/(gamma+1))**((gamma+1)/(gamma-1)))
+    CompressibleFactor = (2 / (gamma + 1))**((gamma + 1) / (2 * (gamma - 1)))
+    mdot_exit_choked = cd_throat * A_t * np.sqrt(32.2*12*gamma * rho_chmb * p_chmb * CompressibleFactor)
     # Calculating exit velocity
     v_exit = 3.28084*np.sqrt(((1000*2*gamma)/(gamma-1))*((Ru*T)/M))
     # Calculating thrust
     thrust_choked = mdot_exit_choked * v_exit / 32.2
     thrust_choked_arr.append(thrust_choked)
-    print(i*tstep, dm_ox_dt, dV_dt, r, p_chmb, thrust_choked)
 # End of For Loop
 
 "----- Plotting -----"
@@ -127,3 +123,13 @@ plt.plot(t_arr, thrust_choked_arr)
 plt.xlabel('Time (s)')
 plt.ylabel('Thrust (psi)')
 plt.show()
+
+# print(i*tstep, dm_ox_dt, dr_dt, r, m_fuel, p_chmb, thrust_choked, v_exit)
+# 0.0 0.3734036845837877 0.07316392983507804 0.2522680818248874 0.0006054007837997793 1376.405120219653 82.10152549044567 9763.312203316464
+# 0.0 0.3732607518157033 0.07314126120235956 0.25226737909727315 0.0006056457115482346 1376.7801743643292 107.30089395212879 9763.964495795766
+
+# rhode  mdot exit 0.2707758459157265
+# metrix mdot exit 0.35363622948771417
+
+# 0.35292142057875475
+# This causes the change in mdot

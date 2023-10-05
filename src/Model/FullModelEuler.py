@@ -77,11 +77,6 @@ for i in range(0,int(i_f)):
     # If chamber exceeds oxidizer tank pressure stop loop.
     if P_ox < P_chmb:
         break
-
-    # If gas volume takes up the volume of the oxidizer tank
-    # if V_tank < V_ox_gas:
-    #     break 
-
     # Calculating Mass flow of Liquid Oxidizer
     dm_ox_dt = Cd * Ainj * np.sqrt(2 * rho_ox * (P_ox - P_chmb))        # [kg/s]
     m_ox = dm_ox_dt*tstep                                               # [kg]
@@ -97,14 +92,11 @@ for i in range(0,int(i_f)):
     m_fuel = dr_dt*tstep*A_port*rho_fuel                                # [kg]
     # Calculating Chamber Pressure
     C_star_nom = np.sqrt((R * T) / (gamma * M))                   # [m/s]
-    CompressibleFactor = (2 / (gamma + 1))**((gamma + 1) / (2 * (gamma - 1)))
+    C_star_denom = (2 / (gamma + 1))**((gamma + 1) / (2 * (gamma - 1)))
         # Note: This relation shows up in mdot exit and C_star | Dimensionless
-    C_star = C_star_nom / CompressibleFactor  
-
+    C_star = C_star_nom / C_star_denom  
+    # Calculating Chamber Pressure
     p_chmb = ((dm_ox_dt + m_fuel/tstep) * C_star)/(A_t)                 # [Pa]
-    # p_chmb = ((dm_ox_dt + m_fuel/tstep))*(840.8786447/0.588693023)/(A_t)
-    # print(p_chmb1, p_chmb, C_star_nom, CompressibleFactor, C_star)
-
     t_arr.append(i*tstep)
     p_chmb_arr.append(p_chmb  / 6895) # Converting Pa to Psi
 
@@ -112,10 +104,10 @@ for i in range(0,int(i_f)):
     m_chmb = m_fuel + m_ox                                              # [kg/s]
     # Calculating new volume in the Combusation Chamber
     V_chmb = np.pi*((0.01587)**2)*(0.0127) + np.pi*((0.0158)**2)*(0.0254) + np.pi*((r)**2)*L #[in^3 --> m^3]
-    # print(V_chmb * 61020)
     # Calculating Density of the combustion chamber
     rho_chmb = m_chmb / V_chmb                                          # [kg/m^3]
     # Calculating the choked mass flow of the combustion chamber
+    CompressibleFactor = (2 / (gamma + 1))**((gamma + 1) / (gamma - 1))
     mdot_exit = cd_throat * A_t * np.sqrt(gamma * rho_chmb * p_chmb * CompressibleFactor) # [kg/s]
     # Calculating exit velocity
     v_exit = np.sqrt(((2*gamma)/(gamma-1)) * ((R*T)/M))
@@ -123,9 +115,6 @@ for i in range(0,int(i_f)):
     # Calculating thrust
     thrust = mdot_exit * v_exit                                         # [N]
     thrust_arr.append(thrust / 4.448) # Converting N to lbf
-    print(i*tstep, dm_ox_dt*2.20462, dr_dt*39.37, r*39.37, m_fuel*2.20462, p_chmb/6895)
-
-    #print(dm_ox_dt, dV_dt, r, p_chmb, thrust)
 # End of For Loop
 
 "----- Plotting -----"
