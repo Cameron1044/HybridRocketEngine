@@ -79,6 +79,7 @@ for i in range(0,int(i_f)):
         break
     # Calculating Mass flow of Liquid Oxidizer
     dm_ox_dt = Cd * Ainj * np.sqrt(2 * rho_ox * (P_ox - P_chmb))        # [kg/s]
+    print(dm_ox_dt)
     m_ox = dm_ox_dt*tstep                                               # [kg]
     # Calculating change in Volume of Oxidizer Tank
     dV_dt = dm_ox_dt / rho_ox * tstep                                   # [m^3]
@@ -91,7 +92,7 @@ for i in range(0,int(i_f)):
     # Calculating mass of fuel flow rate
     m_fuel = dr_dt*tstep*A_port*rho_fuel                                # [kg]
     # Calculating Chamber Pressure
-    C_star_nom = np.sqrt((R * T) / (gamma * M))                   # [m/s]
+    C_star_nom = np.sqrt((R * T) / (gamma * M))                         # [m/s]
     C_star_denom = (2 / (gamma + 1))**((gamma + 1) / (2 * (gamma - 1)))
         # Note: This relation shows up in mdot exit and C_star | Dimensionless
     C_star = C_star_nom / C_star_denom  

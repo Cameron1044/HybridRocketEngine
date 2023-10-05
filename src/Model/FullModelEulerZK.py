@@ -12,8 +12,9 @@ V_tank = 15.8213 / 61020                # Oxidizer Tank Volume | [in^3 --> m^3]
 ## DESIGN INPUTS:
 V_ox_liquid = V_tank*(80/100)           # Initial volume of liquid oxidizer | [L or 1000 cm^3 --> m^3]
     # Note - assuming 80% of the volume is liquid nitrous oxide
-m_loaded = V_ox_liquid * rho_ox         # Initial mass of liquid oxidizer | kg
-n_He  = 0                               # Initial 
+m_loaded = 0.4/2.205 # V_ox_liquid * rho_ox   # Initial mass of liquid oxidizer | kg
+V_gas  = V_tank*(20/100)                # Initial volume of Ullage Gas | [m^3]
+n_gas = 0.000125                        # Initial mass of Ullage gas | [kmol]
 P_ox = 2300 * 6895                      # Initial pressume of the oxidizer tank | [Psi --> Pa]
 Ti_tank = 286.5                         # Initial temperature of the oxidizer tank | K
 m_T = 6.4882;                           # Oxidizer tank mass [kg]
@@ -83,7 +84,7 @@ Ainj = n_holes * np.pi * (phi/2)**2                             # Area of inject
 
 # INITAL OXIDIZER TANK
 n_to = m_loaded / MW2                                           # initial total N2O in tank [kmol]
-Vhat_li = Q2**(1 + (1 - Ti_tank / Q3)**Q4) / Q1                      # molar volume of liquid N2O [m**3/kmol]
+Vhat_li = Q2**(1 + (1 - Ti_tank / Q3)**Q4) / Q1                 # molar volume of liquid N2O [m**3/kmol]
 To = Ti_tank                                                    # initial temperature [K]
 P_sato = np.exp(G1 + G2 / To + G3 * np.log(To) + G4 * To**G5)   # initial vapor pressure of N20 [Pa]
 n_go = P_sato * (V_tank - Vhat_li * n_to) / (-P_sato * Vhat_li + R * To)     # initial N2O gas [kmol]
@@ -111,9 +112,12 @@ t_arr = []
 p_tank_arr = []
 p_chmb_arr = []
 thrust_arr = []
+n_lo_arr = []
+n_go_arr = []
 
 # Initiating For Loop
 for i in range(0,int(i_f)):
+
     "----- BLOWDOWN -----"
     # Given functions of temperature:
     Vhat_l = Q2**(1+(1-To/Q3)**Q4)/Q1                                                                   # molar specific volume of liquid N2O [m^3/kmol]
@@ -131,8 +135,8 @@ for i in range(0,int(i_f)):
     Cp_T = (4.8 + 0.00322*To)*155.239                                                                   # specific heat of oxidizer tank, Aluminum [J/(kg*K)]
 
     ## Simplified expression definitions for solution
-    P = (n_He + n_go)*R*To / (V_tank - n_lo*Vhat_l)                                                     # Calculating Oxidizer Tank Pressure
-    a = m_T*Cp_T + n_He*CVhat_He + n_go*CVhat_g + n_lo*CVhat_l
+    P = (n_gas + n_go)*R*To / (V_tank - n_lo*Vhat_l)                                                    # Calculating Oxidizer Tank Pressure
+    a = m_T*Cp_T + n_gas*CVhat_He + n_go*CVhat_g + n_lo*CVhat_l
     b = P*Vhat_l
     e = -delta_Hv + R*To
     f = -Cd*Ainj*np.sqrt(2/MW2)*np.sqrt((P-P_chmb)/Vhat_l)
@@ -153,9 +157,12 @@ for i in range(0,int(i_f)):
     To = To + dT*tstep
     n_go = n_go + dn_g*tstep
     n_lo = n_lo + dn_l*tstep
-    # Saving Tank Pressure
-    p_tank_arr.append(P  / 6895) # Converting Pa to Psi
+    # Saving Blowdown Model Results 
+    n_lo_arr.append(n_lo)           # Moles of Liquid Nitrous Oxide
+    n_go_arr.append(n_go)           # Moles of Gas Nitrous Oxide 
+    p_tank_arr.append(P  / 6895)    # Pressure of the Oxidizer Tank [Pa --> Psi]
 
+    "----- COMBUSTION CHAMBER -----"
     # Calculating Mass flow of Liquid Oxidizer
     dm_ox_dt = -1*dn_l*MW2                                              # [kg/s]
     m_ox = dm_ox_dt*tstep                                               # [kg]
@@ -175,15 +182,16 @@ for i in range(0,int(i_f)):
     # Calculating Chamber Pressure
     P_chmb = ((dm_ox_dt + m_fuel/tstep) * C_star)/(A_t)                 # [Pa]
     print((P_chmb  / 6895))
-    t_arr.append(i*tstep)
-    p_chmb_arr.append(P_chmb  / 6895) # Converting Pa to Psi
-
     # Calculating Chamber mass flow rate
     m_chmb = m_fuel + m_ox                                              # [kg/s]
     # Calculating new volume in the Combusation Chamber
     V_chmb = np.pi*((0.01587)**2)*(0.0127) + np.pi*((0.0158)**2)*(0.0254) + np.pi*((r)**2)*L #[in^3 --> m^3]
     # Calculating Density of the combustion chamber
     rho_chmb = m_chmb / V_chmb                                          # [kg/m^3]
+    # Saving Combustion Chamber Results
+    p_chmb_arr.append(P_chmb  / 6895) # Pressure of the Combustion Chamber [Pa --> Psi]
+
+    "----- NOZZLE -----"
     # Calculating the choked mass flow of the combustion chamber
     CompressibleFactor = (2 / (gamma + 1))**((gamma + 1) / (gamma - 1))
     mdot_exit = cd_throat * A_t * np.sqrt(gamma * rho_chmb * P_chmb * CompressibleFactor) # [kg/s]
@@ -192,8 +200,10 @@ for i in range(0,int(i_f)):
         # Note: Assumption for perfectly expanded nozzle such that P Chamber = P Exit
     # Calculating thrust
     thrust = mdot_exit * v_exit                                         # [N]
-    thrust_arr.append(thrust / 4.448) # Converting N to lbf
-
+    # Saving Nozzle Results
+    thrust_arr.append(thrust / 4.448)   # Thrust [N --> lbf]
+    # Saving Time
+    t_arr.append(i*tstep)
     # If chamber exceeds oxidizer tank pressure stop loop.
     if P < P_chmb:
         break
@@ -217,4 +227,15 @@ plt.grid(True)
 plt.plot(t_arr, thrust_arr)
 plt.xlabel('Time (s)')
 plt.ylabel('Thrust (lbf)')
+plt.show()
+
+# Oxidizer Tank Equillibrium of Nitroux Oxide Mass
+plt.figure()
+plt.grid(True)
+plt.plot(t_arr, n_go_arr, 'b', linewidth=2)
+plt.plot(t_arr, n_lo_arr, 'g', linewidth=2)
+plt.title('Mass of N20 vs. Time')
+plt.xlabel('Time [s]')
+plt.ylabel('Mass of N2O [kg]')
+plt.legend(['Mass of N2O gas', 'Mass of N2O liquid'])
 plt.show()
