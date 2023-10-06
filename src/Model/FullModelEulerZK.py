@@ -41,7 +41,7 @@ rho_fuel = 1166.15439765                # Density of fuel | [kg/m^3]
 a_i = 0.7                               # Burn rate coefficient | scalar     
 n = 0.8                                 # Pressure exponent | scalar
 conversion_factor_a = (0.0254**(1+2*(n)))*(0.453592**(-n)) # Conversion factor for a | [in --> m, lb --> kg]
-a = a_i * conversion_factor_a           # Burn rate coefficient | [m/s]
+a_m = a_i * conversion_factor_a           # Burn rate coefficient | [m/s]
 ## NOZZLE
 d_t = 0.23 / 39.37                      # Nozzle Throat diameter | [in --> m]
 cd_throat = 0.2                         # Coefficient of Discharge of Nozzle Throat | dimensionless
@@ -85,7 +85,7 @@ for i in range(0,int(i_f)):
     Vhat_l, CVhat_He, CVhat_g, CVhat_l, delta_Hv, P_sat, dP_sat, Cp_T = chem.chemicalStates(To)
 
     ## Simplified expression definitions for solution
-    P = (n_gas + n_go)*R*To / (V_tank - n_lo*Vhat_l)                                                    # Calculating Oxidizer Tank Pressure
+    P = (n_gas + n_go)*R*To / (V_tank - n_lo*Vhat_l)            # Calculating Oxidizer Tank Pressure
     a = m_T*Cp_T + n_gas*CVhat_He + n_go*CVhat_g + n_lo*CVhat_l
     b = P*Vhat_l
     e = -delta_Hv + R*To
@@ -102,7 +102,6 @@ for i in range(0,int(i_f)):
     dT = (b*W+e*Z)/a
     dn_g = Z
     dn_l = W
-    print(P / 6895)
     # Forward Difference Method
     To = To + dT*tstep
     n_go = n_go + dn_g*tstep
@@ -117,8 +116,7 @@ for i in range(0,int(i_f)):
     dm_ox_dt = -1*dn_l*MW2                                              # [kg/s]
     m_ox = dm_ox_dt*tstep                                               # [kg]
     # Calculating change in fuel regression radius
-    print(dm_ox_dt)
-    dr_dt = a * (dm_ox_dt / A_port)**n                                  # [m/s]
+    dr_dt = a_m * (dm_ox_dt / A_port)**n                                  # [m/s]
     r = r + dr_dt*tstep                                                 # [m]
     # Calculating Fuel Burn Surface Area
     A_port = 2 * np.pi * r * L                                          # [m^2]
@@ -131,7 +129,6 @@ for i in range(0,int(i_f)):
     C_star = C_star_nom / C_star_denom  
     # Calculating Chamber Pressure
     P_chmb = ((dm_ox_dt + m_fuel/tstep) * C_star)/(A_t)                 # [Pa]
-    print((P_chmb  / 6895))
     # Calculating Chamber mass flow rate
     m_chmb = m_fuel + m_ox                                              # [kg/s]
     # Calculating new volume in the Combusation Chamber
