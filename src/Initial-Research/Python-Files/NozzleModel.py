@@ -46,5 +46,21 @@ def CalculateThrust(mdot,Ve, Ae, Pe):
  # Currently missing Pe, the exit pressure at the end of the nozzle. May very well be a problem like the nozzle problems from aero :/ ***Pe is the same as Pa*** @jacob
     return T #Thrust is returned, to be used to develop thrust profile
 
+At, rt, re, Length_cone, Ae, AeoAt, Dt, De, Me, Te, Pthr, Length_diff, Ve = Nozzle_Characteristics(mdot, C_str, Ptc, Pe, Tc, gamma, alpha, beta, R)
+
+# Displaying the results
+print("Throat Area (At):", At)
+print("Throat Radius (rt):", rt)
+print("Exit Radius (rt):", re)
+print("Cone Length in mm (Length_cone):", Length_cone)  # Note: Length_cone is repeated twice in the return statement.
+print("Exit Area (Ae):", Ae)
+print("Area Ratio (AeoAt):", AeoAt)
+print("Throat Diameter (Dt):", Dt)
+print("Exit Diameter (De):", De)
+print("Mach Number at Exit (Me):", Me)
+print("Exit Temperature (Te):", Te)
+print("Pressure at Throat (Pthr):", Pthr)
+print("Length of Diffuser (Length_diff):", Length_diff)
+print("Exit Velocity (Ve):", Ve)
 # test
 # Plot Thrust Profile? 
