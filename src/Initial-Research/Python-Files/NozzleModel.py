@@ -15,7 +15,7 @@ Pa = 0 # Ambient Pressure in Boulder, Colorado
 mp = 0 #mass flow of propellant 
 mo = 0 #mass flow of oxidizer
 C_str = 0 #characteristic velocity
-Pc = 0 #Chamber Pressure and can be total pressure Pt for nozzle stations
+Ptc = 0 #Chamber Total Pressure and can be total pressure Pt for nozzle stations
 mdot = mo + mp #mass flow of oxidizer and propellant
 alpha = 15 # [Degrees] - typical half cone angle for majority of nozzle designs
 beta = 45 #degrees -typical converging angle for nozzle diffuser
@@ -23,12 +23,12 @@ Pe = 0 #exit pressure assumed to be ambient pressure for perfectly expanded nozz
 Tc = 0; #chamber temperature same as total temperature Tt in nozzle
 
 # Function to define nozzle geometry:
-def Nozzle_Characteristics(mdot,C_str,Pc,Pe,Dc, AeoAt,alpha,beta):
-    At = (mdot*C_str)/Pc # Calculates optimal throat area given mass flow rate, characteristic velcoity, and chamber pressure
+def Nozzle_Characteristics(mdot,C_str,Ptc,Pe,Dc, AeoAt,alpha,beta):
+    At = (mdot*C_str)/Ptc # Calculates optimal throat area given mass flow rate, characteristic velcoity, and chamber pressure
     
-    Me = np.sqrt((2/(gamma-1))*((Pc/Pe)**((gamma-1)/gamma)-1))
+    Me = np.sqrt((2/(gamma-1))*((Ptc/Pe)**((gamma-1)/gamma)-1))
     Te = Tc/(1+((gamma-1)/2)*(Me**2)) #exit temperature 
-    Pthr = Pc*(2/(gamma+1))**(gamma/(gamma-1)) #Pressure at throat of nozzle assuming Mach = 1 at throat
+    Pthr = Ptc*(2/(gamma+1))**(gamma/(gamma-1)) #Pressure at throat of nozzle assuming Mach = 1 at throat
     AeoAt = (1/Me)*((2/(gamma+1))*(1+((gamma-1)/2)*(Me**2)))**((gamma+1)/(2*(gamma-1)))
     Ae = AeoAt * At # Calculates exit area w/ throat area and area ratio (given constants)
     rt = np.sqrt(At/np.pi) # Determines throat radius based on throat area
