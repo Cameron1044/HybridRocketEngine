@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 # Constants
 gamma = 1.249 #change to correct gamma
-R = 8.3144 #J/mol*k
+R = 188.9 #J/kg*K gas constant for nitrous oxide
 Pa = 0 # Ambient Pressure in Boulder, Colorado
 mp = 0 #mass flow of propellant 
 mo = 0 #mass flow of oxidizer
@@ -23,7 +23,7 @@ Pe = 0 #exit pressure assumed to be ambient pressure for perfectly expanded nozz
 Tc = 0; #chamber temperature same as total temperature Tt in nozzle
 
 # Function to define nozzle geometry:
-def Nozzle_Characteristics(mdot,C_str,Ptc,Pe,Dc, AeoAt,alpha,beta):
+def Nozzle_Characteristics(mdot,C_str,Ptc,Pe,Dc, AeoAt,alpha,beta,R):
     At = (mdot*C_str)/Ptc # Calculates optimal throat area given mass flow rate, characteristic velcoity, and chamber pressure
     
     Me = np.sqrt((2/(gamma-1))*((Ptc/Pe)**((gamma-1)/gamma)-1))
@@ -43,7 +43,7 @@ def Nozzle_Characteristics(mdot,C_str,Ptc,Pe,Dc, AeoAt,alpha,beta):
 # Function to predict thrust performance w/ nozzle geometry
 def CalculateThrust(mdot,Ve, Ae, Pe):
     T = (mdot * Ve) + ((Pe - Pa) * Ae)
- # Currently missing Pe, the exit pressure at the end of the nozzle. May very well be a problem like the nozzle problems from aero :/
+ # Currently missing Pe, the exit pressure at the end of the nozzle. May very well be a problem like the nozzle problems from aero :/ ***Pe is the same as Pa*** @jacob
     return T #Thrust is returned, to be used to develop thrust profile
 
 # test
