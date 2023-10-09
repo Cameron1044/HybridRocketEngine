@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 # Read in necessary files
 #   Read in chamber pressure array from some kind of ZK Output File
 p_chmb_arr = range(1047, 500, 50)
-print(p_chmb_arr)
 
 # Constants
 gamma = 1.249 #Ratio of Specific Heats
@@ -20,12 +19,13 @@ Pa = 14.98 # [psi] Ambient Pressure (Assumed in Boulder, Colorado)
 mp = 0 #mass flow of propellant 
 mo = 0 #mass flow of oxidizer
 C_str = 0 #characteristic velocity
-Ptc = 0 #Chamber Total Pressure and can be total pressure Pt for nozzle stations
+Ptc = 500 #Chamber Total Pressure and can be total pressure Pt for nozzle stations
 mdot = mo + mp #mass flow of oxidizer and propellant
 alpha = 15 # [Degrees] - typical half cone angle for majority of nozzle designs
 beta = 45 #degrees -typical converging angle for nozzle diffuser
-Pe = 0 #exit pressure assumed to be ambient pressure for perfectly expanded nozzle
-Tc = 0; #chamber temperature same as total temperature Tt in nozzle
+Pe = Pa #exit pressure assumed to be ambient pressure for perfectly expanded nozzle
+Tc = 0 #chamber temperature same as total temperature Tt in nozzle
+Dc = 0 # No idea what this is
 
 
 # Alt function, calculates ideal area ratio for each timestep
@@ -40,16 +40,16 @@ for i in range (0,len(p_chmb_arr)): # inefficient for loop method but idc resear
     P0oPa = p_chmb_arr(i)/Pa
 
     # Backsolve for exit mach number
-    Me_arr.append(np.sqrt(((P0oPa)**((gamma - 1) / gamma) - 1 )/( (gamma - 1) / 2 )))
+    Me_arr += (np.sqrt(((P0oPa)**((gamma - 1) / gamma) - 1 )/( (gamma - 1) / 2 )))
 
     # Use area-mach relation to find Ae/A* (ideally = Ae/At), with many intermediate values to simplify code
     intval1 = (gamma+1)/(gamma-1)
     intval2 = 2/(gamma+1)
     intval3 = 1 - (((gamma-1)/2) * Me_arr(i)**2)
-    AreaRatios.append(np.sqrt(1/(Me_arr(i)**2) * (intval2 * intval3)**intval1))
+    AreaRatios += (np.sqrt(1/(Me_arr(i)**2) * (intval2 * intval3)**intval1))
 
     # Function to define nozzle geometry:
-def Nozzle_Characteristics(mdot,C_str,Ptc,Pe,Dc, AeoAt,alpha,beta,R):
+def Nozzle_Characteristics(mdot, C_str, Ptc, Pe, Tc, gamma, alpha, beta, R):
     At = (mdot*C_str)/Ptc # Calculates optimal throat area given mass flow rate, characteristic velcoity, and chamber pressure
     
     Me = np.sqrt((2/(gamma-1))*((Ptc/Pe)**((gamma-1)/gamma)-1))
@@ -64,7 +64,7 @@ def Nozzle_Characteristics(mdot,C_str,Ptc,Pe,Dc, AeoAt,alpha,beta,R):
     Length_cone = (0.5 * (De - Dt)) / (np.tan(alpha)) # Calculate cone length parallel to x axis
     Length_diff = (0.5 * (Dc - Dt)) / (np.tan(beta)) #calculate lenght of diffuser parallel to x axis
     Ve = Me*np.sqrt(gamma*R*Te)
-    return At, rt, Length_cone, Ae,Dt,De,Length_cone,Me,Te,Pthr, Length_diff,Ve
+    return At, rt, re, Length_cone, Ae, AeoAt, Dt, De, Me, Te, Pthr, Length_diff, Ve
 
 
 # Function to predict thrust performance w/ nozzle geometry
@@ -75,6 +75,7 @@ def CalculateThrust(mdot,Ve, Ae, Pe):
 
 At, rt, re, Length_cone, Ae, AeoAt, Dt, De, Me, Te, Pthr, Length_diff, Ve = Nozzle_Characteristics(mdot, C_str, Ptc, Pe, Tc, gamma, alpha, beta, R)
 
+'''
 # Displaying the results
 print("Throat Area (At):", At)
 print("Throat Radius (rt):", rt)
@@ -91,3 +92,6 @@ print("Length of Diffuser (Length_diff):", Length_diff)
 print("Exit Velocity (Ve):", Ve)
 # test
 # Plot Thrust Profile? 
+'''
+
+print("Area Ratios:", AreaRatios)
