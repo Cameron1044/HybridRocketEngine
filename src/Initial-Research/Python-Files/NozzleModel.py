@@ -8,10 +8,15 @@ import math as m
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
+# Read in necessary files
+#   Read in chamber pressure array from some kind of ZK Output File
+p_chmb_arr = range(1047, 500, 50)
+print(p_chmb_arr)
+
 # Constants
-gamma = 1.249 #change to correct gamma
-R = 188.9 #J/kg*K gas constant for nitrous oxide
-Pa = 0 # Ambient Pressure in Boulder, Colorado
+gamma = 1.249 #Ratio of Specific Heats
+R = 188.9 # [J/kg*K] gas constant for nitrous oxide
+Pa = 14.98 # [psi] Ambient Pressure (Assumed in Boulder, Colorado)
 mp = 0 #mass flow of propellant 
 mo = 0 #mass flow of oxidizer
 C_str = 0 #characteristic velocity
@@ -22,7 +27,28 @@ beta = 45 #degrees -typical converging angle for nozzle diffuser
 Pe = 0 #exit pressure assumed to be ambient pressure for perfectly expanded nozzle
 Tc = 0; #chamber temperature same as total temperature Tt in nozzle
 
-# Function to define nozzle geometry:
+
+# Alt function, calculates ideal area ratio for each timestep
+
+# Preallocate arrays
+Me_arr = []
+AreaRatios = []
+
+for i in range (0,len(p_chmb_arr)): # inefficient for loop method but idc research more later lol
+
+    # Calculate total pressure over exit pressure
+    P0oPa = p_chmb_arr(i)/Pa
+
+    # Backsolve for exit mach number
+    Me_arr.append(np.sqrt(((P0oPa)**((gamma - 1) / gamma) - 1 )/( (gamma - 1) / 2 )))
+
+    # Use area-mach relation to find Ae/A* (ideally = Ae/At), with many intermediate values to simplify code
+    intval1 = (gamma+1)/(gamma-1)
+    intval2 = 2/(gamma+1)
+    intval3 = 1 - (((gamma-1)/2) * Me_arr(i)**2)
+    AreaRatios.append(np.sqrt(1/(Me_arr(i)**2) * (intval2 * intval3)**intval1))
+
+    # Function to define nozzle geometry:
 def Nozzle_Characteristics(mdot,C_str,Ptc,Pe,Dc, AeoAt,alpha,beta,R):
     At = (mdot*C_str)/Ptc # Calculates optimal throat area given mass flow rate, characteristic velcoity, and chamber pressure
     
@@ -39,6 +65,7 @@ def Nozzle_Characteristics(mdot,C_str,Ptc,Pe,Dc, AeoAt,alpha,beta,R):
     Length_diff = (0.5 * (Dc - Dt)) / (np.tan(beta)) #calculate lenght of diffuser parallel to x axis
     Ve = Me*np.sqrt(gamma*R*Te)
     return At, rt, Length_cone, Ae,Dt,De,Length_cone,Me,Te,Pthr, Length_diff,Ve
+
 
 # Function to predict thrust performance w/ nozzle geometry
 def CalculateThrust(mdot,Ve, Ae, Pe):
