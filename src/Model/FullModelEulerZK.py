@@ -30,9 +30,12 @@ Cd = 0.5                                # Coefficient of Discharge, Injector | d
 
 "Combustion Chamber Fuel Grain"
 P_chmb = 0                              # Initial Pressure of Combustion Chamber | [Psi --> Pa]
+V_chmb_emty = 120 / 61020               # Empty Volume of the Combustion Chamber | [in^3 --> m^3]
 ## DESIGN INPUTS OF FUEL:
-L = 12 / 39.37                           # Fuel port length | [in --> m]
-r_port0 = 0.25 / 39.37                  # Initial fuel port radius | [in --> m]
+L = 12 / 39.37                          # Fuel port length | [in --> m]
+Fuel_OD = 1.688 / 39.37                 # Fuel Grain Outer Diameter | [in --> m] 
+Fuel_ID = 1.25 / 39.37                  # Fuel Grain Inner Diameter | [in --> m]   
+r_port0 = Fuel_OD - Fuel_ID             # Initial fuel port radius | [in --> m]
 ## Burned Oxidizer + Fuel Properties
 gamma = 1.5                             # specific heat ratios
 T = 5000                                # Chamber Temperature | [K]
@@ -53,7 +56,6 @@ Ainj = 3.4e-6                           # Area of injection holes | [m^2] 34mm f
     # n_holes * np.pi * (phi/2)**2
 # INITAL OXIDIZER TANK
 n_go, n_lo = chem.initialMoles()
-print(n_go, n_lo)
 To = Ti_tank
 
 # INITIAL COMBUSTION CHAMBER
@@ -63,8 +65,8 @@ r = r_port0                                                     # Initial fuel g
 
 "----- CALCULATIONS -----"
 # Time Loop
-tf=10                           # final time [s]
-tstep=0.031                     # time step [s]
+tf=20                           # final time [s]
+tstep=0.005                     # time step [s]
 i_f=tf/tstep
 
 # Initial derivatives
@@ -73,13 +75,16 @@ dm_ox_dt = 0
 dV_dt = 0
 
 # Preallocating arrays
-t_arr = []
-p_tank_arr = []
-p_chmb_arr = []
-thrust_arr = []
-n_lo_arr = []
-n_go_arr = []
-OF_arr = []
+t_arr = [] # time
+p_tank_arr = [] # Oxidizer tank pressure
+p_chmb_arr = [] # Combustion chamber pressure
+thrust_arr = [] # Thrust
+n_lo_arr = [] # Moles of Liquid Nitrous Oxide
+n_go_arr = [] # Moles of Gaseous Nitrous Oxide
+OF_arr = [] # Oxidizer to Fuel Ratio
+r_arr = [] # Fuel Grain Radius
+V_chmb_arr = [] # Combustion Chamber Volume
+mo_arr = [] # Mass
 
 # Initiating For Loop
 for i in range(0,int(i_f)):
@@ -119,28 +124,32 @@ for i in range(0,int(i_f)):
     dm_ox_dt = -1*dn_l*MW2                                              # [kg/s]
     m_ox = dm_ox_dt*tstep                                               # [kg]
     # Calculating change in fuel regression radius
-    dr_dt = a_m * (dm_ox_dt / A_port)**n                                  # [m/s]
-    r = r + dr_dt*tstep                                                 # [m]
+    dr_dt = a_m * (dm_ox_dt / A_port)**n                                # [m/s]
+    r = r - dr_dt*tstep                                                 # [m]
     # Calculating Fuel Burn Surface Area
+        # Note: Cylindrical Surface area --> 2 pi r h
     A_port = 2 * np.pi * r * L                                          # [m^2]
     # Calculating mass of fuel flow rate
-    dm_f_dt = dr_dt * A_port * rho_fuel                                 # [kg/s]
-    OF = dm_f_dt / dm_ox_dt
+    dm_f_dt = dr_dt * A_port * rho_fuel                                 # [kg/s] 
     m_fuel = dm_f_dt * tstep                                            # [kg]
+    # Calculating Oxidizer to Fuel Ratio
+    OF = dm_ox_dt / dm_f_dt
     # Calculating Chamber Pressure
     C_star_nom = np.sqrt((R * T) / (gamma * M))                         # [m/s]
     C_star_denom = (2 / (gamma + 1))**((gamma + 1) / (2 * (gamma - 1)))
         # Note: This relation shows up in mdot exit and C_star | Dimensionless
     C_star = C_star_nom / C_star_denom  
     # Calculating Chamber Pressure
-    P_chmb = ((dm_ox_dt + m_fuel/tstep) * C_star)/(A_t)                 # [Pa]
+    P_chmb = ((dm_ox_dt + dm_f_dt) * C_star)/(A_t)                      # [Pa]
     # Calculating Chamber mass flow rate
     m_chmb = m_fuel + m_ox                                              # [kg/s]
     # Calculating new volume in the Combusation Chamber
-    V_chmb = np.pi*((0.01587)**2)*(0.0127) + np.pi*((0.0158)**2)*(0.0254) + np.pi*((r)**2)*L #[in^3 --> m^3]
+    V_chmb = V_chmb_emty - (np.pi * r**2 * L)                           # [m^3]
     # Calculating Density of the combustion chamber
     rho_chmb = m_chmb / V_chmb                                          # [kg/m^3]
     # Saving Combustion Chamber Results
+    r_arr.append(r * 39.37)           # Fuel Grain Radius [m --> in]
+    V_chmb_arr.append(V_chmb * 61020) # Volume of the Combustion Chamber [m^3 --> in^3]
     OF_arr.append(OF)                 # Fuel to oxidizer ratio
     p_chmb_arr.append(P_chmb  / 6895) # Pressure of the Combustion Chamber [Pa --> Psi]
 
@@ -166,20 +175,23 @@ for i in range(0,int(i_f)):
 # End of For Loop
 
 "----- Plotting -----"
-# Chamber Pressure
-plt.figure()
-plt.grid(True)
-plt.plot(t_arr, p_chmb_arr) 
-plt.xlabel('Time (s)')
-plt.ylabel('P_chmb (psi)')
-plt.show()
-
 # Thrust Profile
 plt.figure()
 plt.grid(True)
-plt.plot(t_arr, thrust_arr)
+plt.plot(t_arr, thrust_arr, linewidth=2)
+plt.title('Thrust vs. Time')
 plt.xlabel('Time (s)')
 plt.ylabel('Thrust (lbf)')
+plt.show()
+
+# Oxidizer Tank and Combustion Chamber Pressure
+plt.figure()
+plt.grid(True)
+plt.plot(t_arr, p_chmb_arr, linewidth=2)
+plt.plot(t_arr, p_tank_arr, linewidth=2) 
+plt.title('Oxidizer Tank and Combustion Chamber Pressure vs. Time')
+plt.xlabel('Time (s)')
+plt.ylabel('Pressure (psi)')
 plt.show()
 
 # Oxidizer Tank Equillibrium of Nitroux Oxide Mass
@@ -189,14 +201,33 @@ plt.plot(t_arr, n_go_arr, 'b', linewidth=2)
 plt.plot(t_arr, n_lo_arr, 'g', linewidth=2)
 plt.title('Mass of N20 vs. Time')
 plt.xlabel('Time [s]')
-plt.ylabel('Mass of N2O [kg]')
+plt.ylabel('Mass of N2O [Moles]')
 plt.legend(['Mass of N2O gas', 'Mass of N2O liquid'])
 plt.show()
 
 # OF Profile
 plt.figure()
 plt.grid(True)
-plt.plot(t_arr, OF_arr)
+plt.plot(t_arr, OF_arr, linewidth=2)
+plt.title('Oxidizer to Fuel Ratio vs. Time')
 plt.xlabel('Time (s)')
-plt.ylabel('Oxidizer to Fuel Ratio')
+plt.ylabel('Oxidizer to Fuel Ratio (O/F)')
+plt.show()
+
+# Fuel Grain Radius Profile
+plt.figure()
+plt.grid(True)
+plt.plot(t_arr, r_arr, linewidth=2)
+plt.title('Fuel Grain Burn over Time')
+plt.xlabel('Time (s)')
+plt.ylabel('Fuel Grain Burn Rate (r) [in]')
+plt.show()
+
+# Combustion Chamber Profile
+plt.figure()
+plt.grid(True)
+plt.plot(t_arr, V_chmb_arr, linewidth=2)
+plt.title('Combustion Chamber Volume vs. Time')
+plt.xlabel('Time (s)')
+plt.ylabel('Combustion Chamber Volume [in^3]')
 plt.show()
