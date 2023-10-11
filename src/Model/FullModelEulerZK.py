@@ -8,7 +8,7 @@ from chemicalProperties import ChemicalProperties
 R = 8314.3                              # universal gas constant [J/(kmol*K)]
 MW2 = 44.013                            # molecular weight of N2O [kg / kmol]
 rho_ox = 1226                           # Liquid Nitroux Oxide at 273K [kg/m³]
-V_tank = 15.8213 / 61020                # Oxidizer Tank Volume | [in^3 --> m^3]
+V_tank = 0.003                          # Oxidizer Tank Volume | [in^3 --> m^3] 3L
 
 ## DESIGN INPUTS:
 V_ox_liquid = V_tank*(80/100)           # Initial volume of liquid oxidizer | [L or 1000 cm^3 --> m^3]
@@ -16,25 +16,26 @@ V_ox_liquid = V_tank*(80/100)           # Initial volume of liquid oxidizer | [L
 m_loaded = 0.4/2.205 # V_ox_liquid * rho_ox   # Initial mass of liquid oxidizer | kg
 V_gas  = V_tank*(20/100)                # Initial volume of Ullage Gas | [m^3]
 n_gas = 0.000125                        # Initial mass of Ullage gas | [kmol]
-P_ox = 2300 * 6895                      # Initial pressume of the oxidizer tank | [Psi --> Pa]
-Ti_tank = 286.5                         # Initial temperature of the oxidizer tank | K
-m_T = 6.4882;                           # Oxidizer tank mass [kg]
+P_ox = 2500 * 6895                      # Initial pressume of the oxidizer tank | [Psi --> Pa]
+Ti_tank = 298                           # Initial temperature of the oxidizer tank | K
+m_T = 2.1;                              # Oxidizer tank mass [kg]
 
-chem = ChemicalProperties(gas="He", mass_loaded=m_loaded, tank_volume=V_tank, initial_temp=Ti_tank)
+chem = ChemicalProperties(gas="Ar", mass_loaded=m_loaded, tank_volume=V_tank, initial_temp=Ti_tank)
 
 "Injector"
-Cd = 0.175                              # Coefficient of Discharge, Injector | dimensionless
-n_holes = 4                             # Number of holes, injector | quantity
-phi = 0.0492 / 39.37                    # Diameter of injection holes | [in --> m]
+Cd = 0.5                                # Coefficient of Discharge, Injector | dimensionless
+## Commented to do later
+# n_holes = 4                             # Number of holes, injector | quantity
+# phi = 0.0492 / 39.37                    # Diameter of injection holes | [in --> m]
 
 "Combustion Chamber Fuel Grain"
 P_chmb = 0                              # Initial Pressure of Combustion Chamber | [Psi --> Pa]
 ## DESIGN INPUTS OF FUEL:
-L = 4 / 39.37                           # Fuel port length | [in --> m]
+L = 12 / 39.37                           # Fuel port length | [in --> m]
 r_port0 = 0.25 / 39.37                  # Initial fuel port radius | [in --> m]
 ## Burned Oxidizer + Fuel Properties
-gamma = 1.249                           # specific heat ratios
-T = 3059                                # Chamber Temperature | [K]
+gamma = 1.5                             # specific heat ratios
+T = 5000                                # Chamber Temperature | [K]
 M = 28.811                              # Molecular Mass | [g / mol]
 rho_fuel = 1166.15439765                # Density of fuel | [kg/m^3]
 # Fuel Regression Coefficients:
@@ -48,8 +49,8 @@ cd_throat = 0.2                         # Coefficient of Discharge of Nozzle Thr
 
 
 "----- Initial Calculations/Inputs -----"
-Ainj = n_holes * np.pi * (phi/2)**2                             # Area of injection holes | [m^2]
-
+Ainj = 3.4e-6                           # Area of injection holes | [m^2] 34mm from chinese
+    # n_holes * np.pi * (phi/2)**2
 # INITAL OXIDIZER TANK
 n_go, n_lo = chem.initialMoles()
 To = Ti_tank

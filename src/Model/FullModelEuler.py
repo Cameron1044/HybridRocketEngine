@@ -41,6 +41,7 @@ cd_throat = 0.2                         # Coefficient of Discharge of Nozzle Thr
 
 "----- Initial Calculations/Inputs -----"
 Ainj = n_holes * np.pi * (phi/2)**2                             # Area of injection holes | [m^2]
+print(Ainj)
 
 # INITAL OXIDIZER TANK
 mdot_ox0 = Cd*Ainj*np.sqrt(2*rho_ox*(P_ox - P_chmb))             # Initial mass flow rate of oxidizer | [kg/s]
@@ -79,7 +80,6 @@ for i in range(0,int(i_f)):
         break
     # Calculating Mass flow of Liquid Oxidizer
     dm_ox_dt = Cd * Ainj * np.sqrt(2 * rho_ox * (P_ox - P_chmb))        # [kg/s]
-    print(dm_ox_dt)
     m_ox = dm_ox_dt*tstep                                               # [kg]
     # Calculating change in Volume of Oxidizer Tank
     dV_dt = dm_ox_dt / rho_ox * tstep                                   # [m^3]
