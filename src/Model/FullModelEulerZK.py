@@ -13,9 +13,9 @@ V_tank = 0.003                          # Oxidizer Tank Volume | [in^3 --> m^3] 
 ## DESIGN INPUTS:
 V_ox_liquid = V_tank*(80/100)           # Initial volume of liquid oxidizer | [L or 1000 cm^3 --> m^3]
     # Note - assuming 80% of the volume is liquid nitrous oxide
-m_loaded = 0.4/2.205 # V_ox_liquid * rho_ox   # Initial mass of liquid oxidizer | kg
+m_loaded = 2.2                          # Initial mass of liquid oxidizer | kg
 V_gas  = V_tank*(20/100)                # Initial volume of Ullage Gas | [m^3]
-n_gas = 0.000125                        # Initial mass of Ullage gas | [kmol]
+n_gas = 0.0000125                       # Initial mass of Ullage gas | [kmol]
 P_ox = 2500 * 6895                      # Initial pressume of the oxidizer tank | [Psi --> Pa]
 Ti_tank = 298                           # Initial temperature of the oxidizer tank | K
 m_T = 2.1;                              # Oxidizer tank mass [kg]
@@ -44,7 +44,7 @@ n = 0.8                                 # Pressure exponent | scalar
 conversion_factor_a = (0.0254**(1+2*(n)))*(0.453592**(-n)) # Conversion factor for a | [in --> m, lb --> kg]
 a_m = a_i * conversion_factor_a           # Burn rate coefficient | [m/s]
 ## NOZZLE
-d_t = 0.23 / 39.37                      # Nozzle Throat diameter | [in --> m]
+d_t = 0.013                             # Nozzle Throat diameter | [in --> m]
 cd_throat = 0.2                         # Coefficient of Discharge of Nozzle Throat | dimensionless
 
 
@@ -53,6 +53,7 @@ Ainj = 3.4e-6                           # Area of injection holes | [m^2] 34mm f
     # n_holes * np.pi * (phi/2)**2
 # INITAL OXIDIZER TANK
 n_go, n_lo = chem.initialMoles()
+print(n_go, n_lo)
 To = Ti_tank
 
 # INITIAL COMBUSTION CHAMBER
@@ -78,6 +79,7 @@ p_chmb_arr = []
 thrust_arr = []
 n_lo_arr = []
 n_go_arr = []
+OF_arr = []
 
 # Initiating For Loop
 for i in range(0,int(i_f)):
@@ -122,7 +124,9 @@ for i in range(0,int(i_f)):
     # Calculating Fuel Burn Surface Area
     A_port = 2 * np.pi * r * L                                          # [m^2]
     # Calculating mass of fuel flow rate
-    m_fuel = dr_dt*tstep*A_port*rho_fuel                                # [kg]
+    dm_f_dt = dr_dt * A_port * rho_fuel                                 # [kg/s]
+    OF = dm_f_dt / dm_ox_dt
+    m_fuel = dm_f_dt * tstep                                            # [kg]
     # Calculating Chamber Pressure
     C_star_nom = np.sqrt((R * T) / (gamma * M))                         # [m/s]
     C_star_denom = (2 / (gamma + 1))**((gamma + 1) / (2 * (gamma - 1)))
@@ -137,6 +141,7 @@ for i in range(0,int(i_f)):
     # Calculating Density of the combustion chamber
     rho_chmb = m_chmb / V_chmb                                          # [kg/m^3]
     # Saving Combustion Chamber Results
+    OF_arr.append(OF)                 # Fuel to oxidizer ratio
     p_chmb_arr.append(P_chmb  / 6895) # Pressure of the Combustion Chamber [Pa --> Psi]
 
     "----- NOZZLE -----"
@@ -186,4 +191,12 @@ plt.title('Mass of N20 vs. Time')
 plt.xlabel('Time [s]')
 plt.ylabel('Mass of N2O [kg]')
 plt.legend(['Mass of N2O gas', 'Mass of N2O liquid'])
+plt.show()
+
+# OF Profile
+plt.figure()
+plt.grid(True)
+plt.plot(t_arr, OF_arr)
+plt.xlabel('Time (s)')
+plt.ylabel('Oxidizer to Fuel Ratio')
 plt.show()
