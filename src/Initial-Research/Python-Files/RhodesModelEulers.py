@@ -18,7 +18,7 @@ phi = 0.0492                        # Diameter of injection holes | inches
 
 "Combustion Chamer Fuel Grain"
 p_chmb = 0                          # Pressure of Combustion Chamber, pre-fire | psi
-L = 4                               # Fuel port length | inches
+L = 12                               # Fuel port length | inches
 r_port0 = 0.25                      # Initial fuel port radius | inches
 a = 0.7                             # Burn rate coefficient | scalar
 n = 0.8                             # Pressure exponent | scalar
@@ -26,9 +26,9 @@ d_t = 0.23                          # Throat diameter | inches
 rho_fuel = 0.0421                   # Density of fuel | lb/in^3
 
 ### Constants ###
-gamma = 1.249                       # specific heat ratios
+gamma = 1.5                         # specific heat ratio of combustion products
 cd_throat = 0.2
-Ru = 8.314                          # Universal Gas COnstanty
+Ru = 8.314                          # Universal Gas Constant
 T = 3059
 M = 28.811                          # Molecular Mass
 
