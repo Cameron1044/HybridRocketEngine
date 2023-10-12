@@ -33,7 +33,6 @@ def plot_as_individual(df):
     plt.title('Thrust vs. Time')
     plt.xlabel('Time (s)')
     plt.ylabel('Thrust (lbf)')
-    plt.show()
 
     # Oxidizer Tank and Combustion Chamber Pressure
     plt.figure(figsize=(5, 4))
@@ -44,7 +43,6 @@ def plot_as_individual(df):
     plt.xlabel('Time (s)')
     plt.ylabel('Pressure (psi)')
     plt.legend()
-    plt.show()
 
     # Oxidizer Tank Equilibrium of Nitrous Oxide Mass
     plt.figure(figsize=(5, 4))
@@ -55,7 +53,6 @@ def plot_as_individual(df):
     plt.xlabel('Time [s]')
     plt.ylabel('Mass of N2O [Moles]')
     plt.legend()
-    plt.show()
 
     # OF Profile
     plt.figure(figsize=(5, 4))
@@ -64,7 +61,6 @@ def plot_as_individual(df):
     plt.title('Oxidizer to Fuel Ratio vs. Time')
     plt.xlabel('Time (s)')
     plt.ylabel('Oxidizer to Fuel Ratio (O/F)')
-    plt.show()
 
     # Fuel Grain Radius Profile
     plt.figure(figsize=(5, 4))
@@ -73,7 +69,6 @@ def plot_as_individual(df):
     plt.title('Fuel Grain Burn over Time')
     plt.xlabel('Time (s)')
     plt.ylabel('Fuel Grain Burn Rate (r) [in]')
-    plt.show()
 
     # Combustion Chamber Profile
     plt.figure(figsize=(5, 4))
