@@ -3,7 +3,7 @@ import math as m
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
-class ChemicalProperties():
+class BlowdownModel():
     def __init__(self, gas="He", mass_loaded=0, tank_volume=0, initial_temp=0):
         self.To = initial_temp # initial temperature [K]
         self.mass_loaded = mass_loaded # N2O mass initially loaded into tank [kg]
@@ -47,6 +47,8 @@ class ChemicalProperties():
         self.E4 = 0
         self.E5 = 0
 
+        self.n_go, self.n_lo = self.initialMoles()
+
     def ullageGas(self, gas):
         C1_N2 = 0.2911e5 # heat capacity of N2 at constant pressure [J/(kmol*K)] coefficients
         C2_N2 = 0.0861e5
@@ -86,3 +88,26 @@ class ChemicalProperties():
         dP_sat = (-self.G2/(T**2) + self.G3/T + self.G4*self.G5*T**(self.G5-1)) * np.exp(self.G1 + self.G2/T + self.G3*np.log(T) + self.G4*T**self.G5)
         Cp_T = (4.8 + 0.00322*T)*155.239
         return Vhat_l, CVhat_He, CVhat_g, CVhat_l, delta_Hv, P_sat, dP_sat, Cp_T
+    
+    def ZKModel(self, To, n_go, n_lo, n_gas, V_tank, Ainj, Cd, P_chmb, m_T):
+        Vhat_l, CVhat_He, CVhat_g, CVhat_l, delta_Hv, P_sat, dP_sat, Cp_T = self.chemicalStates(To)
+
+        ## Simplified expression definitions for solution
+        P = (n_gas + n_go)*self.R*To / (V_tank - n_lo*Vhat_l)# Calculating Oxidizer Tank Pressure
+        a = m_T*Cp_T + n_gas*CVhat_He + n_go*CVhat_g + n_lo*CVhat_l
+        b = P*Vhat_l
+        e = -delta_Hv + self.R*To
+        f = -Cd*Ainj*np.sqrt(2/self.MW_N2O)*np.sqrt((P-P_chmb)/Vhat_l)
+        j = -Vhat_l*P_sat
+        k = (V_tank - n_lo*Vhat_l)*dP_sat
+        m = self.R*To
+        q = self.R*n_go
+
+        Z=(-f*(-j*a + (q-k)*b)) / (a*(m+j) + (q-k)*(e-b))
+        W=(-Z*(m*a + (q-k)*e)) / (-j*a + (q-k)*b)
+        
+        # Derivative Functions
+        dT = (b*W+e*Z)/a
+        dn_g = Z
+        dn_l = W
+        return dT, dn_g, dn_l, P

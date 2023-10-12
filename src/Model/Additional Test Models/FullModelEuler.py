@@ -159,7 +159,6 @@ plt.title('Oxidizer Tank and Combustion Chamber Pressure vs. Time')
 plt.legend(loc = 'best')
 plt.xlabel('Time (s)')
 plt.ylabel('Pressure (psi)')
-plt.show()
 
 # OF Profile
 plt.figure()
@@ -168,7 +167,6 @@ plt.plot(t_arr, OF_arr, linewidth=2)
 plt.title('Oxidizer to Fuel Ratio vs. Time')
 plt.xlabel('Time (s)')
 plt.ylabel('Oxidizer to Fuel Ratio (O/F)')
-plt.show()
 
 # Fuel Grain Radius Profile
 plt.figure()
@@ -177,7 +175,6 @@ plt.plot(t_arr, r_arr, linewidth=2)
 plt.title('Fuel Grain Burn over Time')
 plt.xlabel('Time (s)')
 plt.ylabel('Fuel Grain Burn Rate (r) [in]')
-plt.show()
 
 # Combustion Chamber Profile
 plt.figure()
@@ -186,7 +183,6 @@ plt.plot(t_arr, V_chmb_arr, linewidth=2)
 plt.title('Combustion Chamber Volume vs. Time')
 plt.xlabel('Time (s)')
 plt.ylabel('Combustion Chamber Volume [in^3]')
-plt.show()
 
 # Mass Flow Rate of Oxidizer and Fuel
 plt.figure()
@@ -197,4 +193,5 @@ plt.title('Mass Flow Rates over Time')
 plt.legend(loc='best')
 plt.xlabel('Time (s)')
 plt.ylabel('Mass Flow Rates [lb/s]')
+
 plt.show()

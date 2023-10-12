@@ -1,7 +1,9 @@
+# As of Oct 12 12:32 AM
+
 import numpy as np
 import math as m
 import matplotlib.pyplot as plt
-from chemicalProperties import ChemicalProperties
+from Classes.chemicalProperties import ChemicalProperties
 
 "----- Inital Conditions -----"
 "Oxidizer Tank - Liquid Nitroux Oxide"
@@ -36,6 +38,7 @@ L = 12 / 39.37                          # Fuel port length | [in --> m]
 Fuel_OD = 1.688 / 39.37                 # Fuel Grain Outer Diameter | [in --> m] 
 Fuel_ID = 1.25 / 39.37                  # Fuel Grain Inner Diameter | [in --> m]   
 r_port0 = Fuel_OD - Fuel_ID             # Initial fuel port radius | [in --> m]
+
 ## Burned Oxidizer + Fuel Properties
 gamma = 1.5                             # specific heat ratios
 T = 5000                                # Chamber Temperature | [K]
@@ -47,9 +50,8 @@ n = 0.8                                 # Pressure exponent | scalar
 conversion_factor_a = (0.0254**(1+2*(n)))*(0.453592**(-n)) # Conversion factor for a | [in --> m, lb --> kg]
 a_m = a_i * conversion_factor_a           # Burn rate coefficient | [m/s]
 ## NOZZLE
-d_t = 0.013                             # Nozzle Throat diameter | [in --> m]
+d_t = 0.5 / 39.37                             # Nozzle Throat diameter | [in --> m]
 cd_throat = 0.2                         # Coefficient of Discharge of Nozzle Throat | dimensionless
-
 
 "----- Initial Calculations/Inputs -----"
 Ainj = 3.4e-6                           # Area of injection holes | [m^2] 34mm from chinese
@@ -85,10 +87,10 @@ OF_arr = [] # Oxidizer to Fuel Ratio
 r_arr = [] # Fuel Grain Radius
 V_chmb_arr = [] # Combustion Chamber Volume
 mo_arr = [] # Mass
+print(L, r_port0, P_ox, V_tank, V_chmb_emty, d_t)
 
 # Initiating For Loop
 for i in range(0,int(i_f)):
-
     "----- BLOWDOWN -----"
     Vhat_l, CVhat_He, CVhat_g, CVhat_l, delta_Hv, P_sat, dP_sat, Cp_T = chem.chemicalStates(To)
 
@@ -176,7 +178,7 @@ for i in range(0,int(i_f)):
 
 "----- Plotting -----"
 # Thrust Profile
-plt.figure()
+plt.figure(1)
 plt.grid(True)
 plt.plot(t_arr, thrust_arr, linewidth=2)
 plt.title('Thrust vs. Time')
@@ -185,7 +187,7 @@ plt.ylabel('Thrust (lbf)')
 plt.show()
 
 # Oxidizer Tank and Combustion Chamber Pressure
-plt.figure()
+plt.figure(2)
 plt.grid(True)
 plt.plot(t_arr, p_chmb_arr, linewidth=2)
 plt.plot(t_arr, p_tank_arr, linewidth=2) 
@@ -195,7 +197,7 @@ plt.ylabel('Pressure (psi)')
 plt.show()
 
 # Oxidizer Tank Equillibrium of Nitroux Oxide Mass
-plt.figure()
+plt.figure(3)
 plt.grid(True)
 plt.plot(t_arr, n_go_arr, 'b', linewidth=2)
 plt.plot(t_arr, n_lo_arr, 'g', linewidth=2)
@@ -206,7 +208,7 @@ plt.legend(['Mass of N2O gas', 'Mass of N2O liquid'])
 plt.show()
 
 # OF Profile
-plt.figure()
+plt.figure(4)
 plt.grid(True)
 plt.plot(t_arr, OF_arr, linewidth=2)
 plt.title('Oxidizer to Fuel Ratio vs. Time')
@@ -215,7 +217,7 @@ plt.ylabel('Oxidizer to Fuel Ratio (O/F)')
 plt.show()
 
 # Fuel Grain Radius Profile
-plt.figure()
+plt.figure(5)
 plt.grid(True)
 plt.plot(t_arr, r_arr, linewidth=2)
 plt.title('Fuel Grain Burn over Time')
@@ -224,7 +226,7 @@ plt.ylabel('Fuel Grain Burn Rate (r) [in]')
 plt.show()
 
 # Combustion Chamber Profile
-plt.figure()
+plt.figure(6)
 plt.grid(True)
 plt.plot(t_arr, V_chmb_arr, linewidth=2)
 plt.title('Combustion Chamber Volume vs. Time')
