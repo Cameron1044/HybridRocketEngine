@@ -1,233 +1,223 @@
 import numpy as np
 import math as m
 import matplotlib.pyplot as plt
-from chemicalProperties import ChemicalProperties
+from tabulate import tabulate
+import pandas as pd
+
+from Utilities.blowdownModel import BlowdownModel
+from Utilities.utilities import units, plot_as_individual, plot_as_subplots
+
+def mainLoop(tf, tstep, initial_inputs):
+    "----- Inital Conditions -----"
+    # Injector
+    Ainj = initial_inputs["Ainj"]
+    Cd = initial_inputs["Cd"]
+    # Fuel Properties
+    rho_fuel = initial_inputs["rho_fuel"]
+    M = initial_inputs["M"]
+    T = initial_inputs["T"]
+    gamma = initial_inputs["gamma"]
+    n = initial_inputs["n"]
+    a = initial_inputs["a"]
+    # Fuel Grain
+    L = initial_inputs["L"]
+    r_port0 = initial_inputs["r_port0"]
+    # Oxidizer Tank
+    m_loaded = initial_inputs["m_loaded"]
+    n_gas = initial_inputs["n_gas"]
+    V_tank = initial_inputs["V_tank"]
+    To = initial_inputs["Ti_tank"]
+    m_T = initial_inputs["m_T"]
+    # Nozzle
+    d_t = initial_inputs["d_t"]
+    cd_throat = initial_inputs["cd_throat"]
+    # Volumes
+    V_chmb_emty = initial_inputs["V_chmb_emty"]
+
+    "----- Initial Calculations -----"
+    # INITIAL COMBUSTION CHAMBER
+    A_t = np.pi*(d_t/2)**2                                          # Cross-sectional area of nozzle throat | [m^2]
+    A_port = 2 * np.pi * r_port0 * L                                # Inital fuel grain burn surface area | [m^2]
+    r = r_port0                                                     # Initial fuel grain radius | [m]
+
+    "----- Initial Setup -----"
+    chem = BlowdownModel(gas="Ar", mass_loaded=m_loaded, tank_volume=V_tank, initial_temp=Ti_tank)
+    n_go = chem.n_go
+    n_lo = chem.n_lo
+    P_chmb = 0
+
+    # Initial derivatives
+    dr_dt = 0
+    dm_ox_dt = 0
+
+    # time Loop
+    i_f=tf/tstep
+
+    for i in range(0,int(i_f)):
+        "----- BLOWDOWN -----"
+        dT, dn_g, dn_l, P = chem.ZKModel(To, n_go, n_lo, n_gas, V_tank, Ainj, Cd, P_chmb, m_T)
+        # Forward Difference Method
+        To = To + dT*tstep
+        n_go = n_go + dn_g*tstep
+        n_lo = n_lo + dn_l*tstep
+
+        "----- COMBUSTION CHAMBER -----"
+        # Calculating Mass flow of Liquid Oxidizer
+        dm_ox_dt = -1*dn_l*chem.MW_N2O                                      # [kg/s]
+        m_ox = dm_ox_dt*tstep                                               # [kg]
+
+        # Calculating change in fuel regression radius
+        dr_dt = a * (dm_ox_dt / A_port)**n                                # [m/s]
+        r = r - dr_dt*tstep                                                 # [m]
+
+        # Calculating Fuel Burn Surface Area
+            # Note: Cylindrical Surface area --> 2 pi r h
+        A_port = 2 * np.pi * r * L                                          # [m^2]
+
+        # Calculating mass of fuel flow rate
+        dm_f_dt = dr_dt * A_port * rho_fuel                                 # [kg/s] 
+        m_fuel = dm_f_dt * tstep                                            # [kg]
+
+        # Calculating Oxidizer to Fuel Ratio
+        OF = dm_ox_dt / dm_f_dt
+
+        # Calculating Chamber Pressure
+        C_star_nom = np.sqrt((chem.R * T) / (gamma * M))                         # [m/s]
+        C_star_denom = (2 / (gamma + 1))**((gamma + 1) / (2 * (gamma - 1)))
+
+            # Note: This relation shows up in mdot exit and C_star | Dimensionless
+        C_star = C_star_nom / C_star_denom  
+
+        # Calculating Chamber Pressure
+        P_chmb = ((dm_ox_dt + dm_f_dt) * C_star)/(A_t)                      # [Pa]
+
+        # Calculating Chamber mass flow rate
+        m_chmb = m_fuel + m_ox                                              # [kg/s]
+
+        # Calculating new volume in the Combusation Chamber
+        V_chmb = V_chmb_emty - (np.pi * r**2 * L)                           # [m^3]
+
+        # Calculating Density of the combustion chamber
+        rho_chmb = m_chmb / V_chmb                                          # [kg/m^3]
+
+        "----- NOZZLE -----"
+        # Calculating the choked mass flow of the combustion chamber
+        CompressibleFactor = (2 / (gamma + 1))**((gamma + 1) / (gamma - 1))
+        mdot_exit = cd_throat * A_t * np.sqrt(gamma * rho_chmb * P_chmb * CompressibleFactor) # [kg/s]
+        # Calculating exit velocity
+        v_exit = np.sqrt(((2*gamma)/(gamma-1)) * ((chem.R*T)/M))
+            # Note: Assumption for perfectly expanded nozzle such that P Chamber = P Exit
+        # Calculating thrust
+        thrust = mdot_exit * v_exit                                         # [N]
+        # If chamber exceeds oxidizer tank pressure stop loop.
+
+        "----- DATAFRAME -----"
+        new_data = { # Dictionary of new data
+            'time': i * tstep,
+            'dm_ox_dt': dm_ox_dt,
+            'dr_dt': dr_dt,
+            'thrust': units(thrust, "N_to_lbf"),
+            'n_lo': n_lo,
+            'n_go': n_go,
+            'OF': OF,
+            'r': units(r, "m_to_in"),
+            'V_chmb': units(V_chmb, "m3_to_in3"),
+            'p_chmb': units(P_chmb, "pa_to_psi"),
+            'p_tank': units(P, "pa_to_psi")
+        }
+        df.loc[len(df)] = new_data # Append new data to dataframe
+
+        "----- BREAK CONDITIONS -----"
+        tf1 = P_chmb > P # Chamber pressure is greater than tank pressure
+        tf2 = n_lo <= 0 # No more liquid oxidizer
+        tf3 = np.isnan(P) or np.isnan(P_chmb) or np.isnan(thrust) # Pressure or thrust is NaN
+        if tf1 or tf2 or tf3:
+            break
+    return df
 
 "----- Inital Conditions -----"
-"Oxidizer Tank - Liquid Nitroux Oxide"
-R = 8314.3                              # universal gas constant [J/(kmol*K)]
-MW2 = 44.013                            # molecular weight of N2O [kg / kmol]
-rho_ox = 1226                           # Liquid Nitroux Oxide at 273K [kg/m³]
-V_tank = 0.003                          # Oxidizer Tank Volume | [in^3 --> m^3] 3L
+"Injector"
+Ainj = 3.4e-6                           # Area of injection holes | [m^2] 34mm from chinese
+Cd = 0.5                                # Coefficient of Discharge, Injector | dimensionless
 
-## DESIGN INPUTS:
-V_ox_liquid = V_tank*(80/100)           # Initial volume of liquid oxidizer | [L or 1000 cm^3 --> m^3]
-    # Note - assuming 80% of the volume is liquid nitrous oxide
+"Fuel Properties"
+rho_fuel = 1166.15439765                # Density of fuel | [kg/m^3]
+M = 28.811                              # Molecular Mass | [g / mol]
+T = 5000                                # Chamber Temperature | [K]
+gamma = 1.5                             # specific heat ratios
+n = 0.8                                 # Pressure exponent | scalar
+a = units(0.7, "ai_to_am", n=n)         # Burn rate coefficient | scalar  
+
+"Combustion Chamber and Grain"
+Fuel_OD = units(1.688, "in_to_m")       # Fuel Grain Outer Diameter | [in --> m] 
+Fuel_ID = units(1.25, "in_to_m")        # Fuel Grain Inner Diameter | [in --> m]
+L = units(12, "in_to_m")                # Fuel port length | [in --> m]
+r_port0 = Fuel_OD - Fuel_ID             # Initial fuel port radius | [in --> m]
+V_chmb_emty = units(120, "in3_to_m3")   # Empty Volume of the Combustion Chamber | [in^3 --> m^3]
+
+"Oxidizer Tank"
 m_loaded = 2.2                          # Initial mass of liquid oxidizer | kg
-V_gas  = V_tank*(20/100)                # Initial volume of Ullage Gas | [m^3]
 n_gas = 0.0000125                       # Initial mass of Ullage gas | [kmol]
-P_ox = 2500 * 6895                      # Initial pressume of the oxidizer tank | [Psi --> Pa]
+V_tank = units(3, "L_to_m3")            # Oxidizer Tank Volume | [L --> m^3]
 Ti_tank = 298                           # Initial temperature of the oxidizer tank | K
 m_T = 2.1;                              # Oxidizer tank mass [kg]
 
-chem = ChemicalProperties(gas="Ar", mass_loaded=m_loaded, tank_volume=V_tank, initial_temp=Ti_tank)
-
-"Injector"
-Cd = 0.5                                # Coefficient of Discharge, Injector | dimensionless
-## Commented to do later
-# n_holes = 4                             # Number of holes, injector | quantity
-# phi = 0.0492 / 39.37                    # Diameter of injection holes | [in --> m]
-
-"Combustion Chamber Fuel Grain"
-P_chmb = 0                              # Initial Pressure of Combustion Chamber | [Psi --> Pa]
-V_chmb_emty = 120 / 61020               # Empty Volume of the Combustion Chamber | [in^3 --> m^3]
-## DESIGN INPUTS OF FUEL:
-L = 12 / 39.37                          # Fuel port length | [in --> m]
-Fuel_OD = 1.688 / 39.37                 # Fuel Grain Outer Diameter | [in --> m] 
-Fuel_ID = 1.25 / 39.37                  # Fuel Grain Inner Diameter | [in --> m]   
-r_port0 = Fuel_OD - Fuel_ID             # Initial fuel port radius | [in --> m]
-## Burned Oxidizer + Fuel Properties
-gamma = 1.5                             # specific heat ratios
-T = 5000                                # Chamber Temperature | [K]
-M = 28.811                              # Molecular Mass | [g / mol]
-rho_fuel = 1166.15439765                # Density of fuel | [kg/m^3]
-# Fuel Regression Coefficients:
-a_i = 0.7                               # Burn rate coefficient | scalar     
-n = 0.8                                 # Pressure exponent | scalar
-conversion_factor_a = (0.0254**(1+2*(n)))*(0.453592**(-n)) # Conversion factor for a | [in --> m, lb --> kg]
-a_m = a_i * conversion_factor_a           # Burn rate coefficient | [m/s]
-## NOZZLE
-d_t = 0.013                             # Nozzle Throat diameter | [in --> m]
+"Nozzle"
+d_t = units(0.5, "in_to_m")             # Nozzle Throat diameter | [in --> m]
 cd_throat = 0.2                         # Coefficient of Discharge of Nozzle Throat | dimensionless
 
+"----- INPUTS -----"
+data_columns = [ # Dataframe columns
+    "time", 
+    "dm_ox_dt", 
+    "dr_dt", 
+    "thrust",
+    "n_lo",
+    "n_go",
+    "OF",
+    "r",
+    "V_chmb",
+    "p_chmb",
+    "p_tank"
+]
+df = pd.DataFrame(columns=data_columns) # Create dataframe
 
-"----- Initial Calculations/Inputs -----"
-Ainj = 3.4e-6                           # Area of injection holes | [m^2] 34mm from chinese
-    # n_holes * np.pi * (phi/2)**2
-# INITAL OXIDIZER TANK
-n_go, n_lo = chem.initialMoles()
-To = Ti_tank
+initial_inputs = { # Dictionary of initial inputs
+    # Injector
+    "Ainj": Ainj,
+    "Cd": Cd,
+    # Fuel Properties
+    "rho_fuel": rho_fuel,
+    "M": M,
+    "T": T,
+    "gamma": gamma,
+    "n": n,
+    "a": a,
+    # Fuel Grain
+    "L": L,
+    "r_port0": r_port0,
+    # Oxidizer Tank
+    "m_loaded": m_loaded,
+    "n_gas": n_gas,
+    "V_tank": V_tank,
+    "Ti_tank": Ti_tank,
+    "m_T": m_T,
+    # Nozzle
+    "d_t": d_t,
+    "cd_throat": cd_throat,
+    # Volumes
+    "V_chmb_emty": V_chmb_emty,
+}
 
-# INITIAL COMBUSTION CHAMBER
-A_t = np.pi*(d_t/2)**2                                          # Cross-sectional area of nozzle throat | [m^2]
-A_port = 2 * np.pi * r_port0 * L                                # Inital fuel grain burn surface area | [m^2]
-r = r_port0                                                     # Initial fuel grain radius | [m]
-
-"----- CALCULATIONS -----"
-# Time Loop
 tf=20                           # final time [s]
 tstep=0.005                     # time step [s]
-i_f=tf/tstep
 
-# Initial derivatives
-dr_dt = 0
-dm_ox_dt = 0
-dV_dt = 0
+df = mainLoop(tf, tstep, initial_inputs)
 
-# Preallocating arrays
-t_arr = [] # time
-p_tank_arr = [] # Oxidizer tank pressure
-p_chmb_arr = [] # Combustion chamber pressure
-thrust_arr = [] # Thrust
-n_lo_arr = [] # Moles of Liquid Nitrous Oxide
-n_go_arr = [] # Moles of Gaseous Nitrous Oxide
-OF_arr = [] # Oxidizer to Fuel Ratio
-r_arr = [] # Fuel Grain Radius
-V_chmb_arr = [] # Combustion Chamber Volume
-mo_arr = [] # Mass
-
-# Initiating For Loop
-for i in range(0,int(i_f)):
-
-    "----- BLOWDOWN -----"
-    Vhat_l, CVhat_He, CVhat_g, CVhat_l, delta_Hv, P_sat, dP_sat, Cp_T = chem.chemicalStates(To)
-
-    ## Simplified expression definitions for solution
-    P = (n_gas + n_go)*R*To / (V_tank - n_lo*Vhat_l)            # Calculating Oxidizer Tank Pressure
-    a = m_T*Cp_T + n_gas*CVhat_He + n_go*CVhat_g + n_lo*CVhat_l
-    b = P*Vhat_l
-    e = -delta_Hv + R*To
-    f = -Cd*Ainj*np.sqrt(2/MW2)*np.sqrt((P-P_chmb)/Vhat_l)
-    j = -Vhat_l*P_sat
-    k = (V_tank - n_lo*Vhat_l)*dP_sat
-    m = R*To
-    q = R*n_go
-
-    Z=(-f*(-j*a + (q-k)*b)) / (a*(m+j) + (q-k)*(e-b))
-    W=(-Z*(m*a + (q-k)*e)) / (-j*a + (q-k)*b)
-    
-    # Derivative Functions
-    dT = (b*W+e*Z)/a
-    dn_g = Z
-    dn_l = W
-    # Forward Difference Method
-    To = To + dT*tstep
-    n_go = n_go + dn_g*tstep
-    n_lo = n_lo + dn_l*tstep
-    # Saving Blowdown Model Results 
-    n_lo_arr.append(n_lo)           # Moles of Liquid Nitrous Oxide
-    n_go_arr.append(n_go)           # Moles of Gas Nitrous Oxide 
-    p_tank_arr.append(P  / 6895)    # Pressure of the Oxidizer Tank [Pa --> Psi]
-
-    "----- COMBUSTION CHAMBER -----"
-    # Calculating Mass flow of Liquid Oxidizer
-    dm_ox_dt = -1*dn_l*MW2                                              # [kg/s]
-    m_ox = dm_ox_dt*tstep                                               # [kg]
-    # Calculating change in fuel regression radius
-    dr_dt = a_m * (dm_ox_dt / A_port)**n                                # [m/s]
-    r = r - dr_dt*tstep                                                 # [m]
-    # Calculating Fuel Burn Surface Area
-        # Note: Cylindrical Surface area --> 2 pi r h
-    A_port = 2 * np.pi * r * L                                          # [m^2]
-    # Calculating mass of fuel flow rate
-    dm_f_dt = dr_dt * A_port * rho_fuel                                 # [kg/s] 
-    m_fuel = dm_f_dt * tstep                                            # [kg]
-    # Calculating Oxidizer to Fuel Ratio
-    OF = dm_ox_dt / dm_f_dt
-    # Calculating Chamber Pressure
-    C_star_nom = np.sqrt((R * T) / (gamma * M))                         # [m/s]
-    C_star_denom = (2 / (gamma + 1))**((gamma + 1) / (2 * (gamma - 1)))
-        # Note: This relation shows up in mdot exit and C_star | Dimensionless
-    C_star = C_star_nom / C_star_denom  
-    # Calculating Chamber Pressure
-    P_chmb = ((dm_ox_dt + dm_f_dt) * C_star)/(A_t)                      # [Pa]
-    # Calculating Chamber mass flow rate
-    m_chmb = m_fuel + m_ox                                              # [kg/s]
-    # Calculating new volume in the Combusation Chamber
-    V_chmb = V_chmb_emty - (np.pi * r**2 * L)                           # [m^3]
-    # Calculating Density of the combustion chamber
-    rho_chmb = m_chmb / V_chmb                                          # [kg/m^3]
-    # Saving Combustion Chamber Results
-    r_arr.append(r * 39.37)           # Fuel Grain Radius [m --> in]
-    V_chmb_arr.append(V_chmb * 61020) # Volume of the Combustion Chamber [m^3 --> in^3]
-    OF_arr.append(OF)                 # Fuel to oxidizer ratio
-    p_chmb_arr.append(P_chmb  / 6895) # Pressure of the Combustion Chamber [Pa --> Psi]
-
-    "----- NOZZLE -----"
-    # Calculating the choked mass flow of the combustion chamber
-    CompressibleFactor = (2 / (gamma + 1))**((gamma + 1) / (gamma - 1))
-    mdot_exit = cd_throat * A_t * np.sqrt(gamma * rho_chmb * P_chmb * CompressibleFactor) # [kg/s]
-    # Calculating exit velocity
-    v_exit = np.sqrt(((2*gamma)/(gamma-1)) * ((R*T)/M))
-        # Note: Assumption for perfectly expanded nozzle such that P Chamber = P Exit
-    # Calculating thrust
-    thrust = mdot_exit * v_exit                                         # [N]
-    # Saving Nozzle Results
-    thrust_arr.append(thrust / 4.448)   # Thrust [N --> lbf]
-    # Saving Time
-    t_arr.append(i*tstep)
-    # If chamber exceeds oxidizer tank pressure stop loop.
-    if P < P_chmb:
-        break
-    # If mass of Liquid Nitroux Oxide is 0, stop loop
-    if n_lo <= 0:
-        break
-# End of For Loop
+"----- Table -----"
+print(tabulate(df.iloc[::10], headers='keys', tablefmt='fancy_grid')) # Print every 10th row
+df.to_csv("src/Model/CSVFiles/current_data.csv", index=False) # Save dataframe to csv
 
 "----- Plotting -----"
-# Thrust Profile
-plt.figure()
-plt.grid(True)
-plt.plot(t_arr, thrust_arr, linewidth=2)
-plt.title('Thrust vs. Time')
-plt.xlabel('Time (s)')
-plt.ylabel('Thrust (lbf)')
-plt.show()
-
-# Oxidizer Tank and Combustion Chamber Pressure
-plt.figure()
-plt.grid(True)
-plt.plot(t_arr, p_chmb_arr, linewidth=2)
-plt.plot(t_arr, p_tank_arr, linewidth=2) 
-plt.title('Oxidizer Tank and Combustion Chamber Pressure vs. Time')
-plt.xlabel('Time (s)')
-plt.ylabel('Pressure (psi)')
-plt.show()
-
-# Oxidizer Tank Equillibrium of Nitroux Oxide Mass
-plt.figure()
-plt.grid(True)
-plt.plot(t_arr, n_go_arr, 'b', linewidth=2)
-plt.plot(t_arr, n_lo_arr, 'g', linewidth=2)
-plt.title('Mass of N20 vs. Time')
-plt.xlabel('Time [s]')
-plt.ylabel('Mass of N2O [Moles]')
-plt.legend(['Mass of N2O gas', 'Mass of N2O liquid'])
-plt.show()
-
-# OF Profile
-plt.figure()
-plt.grid(True)
-plt.plot(t_arr, OF_arr, linewidth=2)
-plt.title('Oxidizer to Fuel Ratio vs. Time')
-plt.xlabel('Time (s)')
-plt.ylabel('Oxidizer to Fuel Ratio (O/F)')
-plt.show()
-
-# Fuel Grain Radius Profile
-plt.figure()
-plt.grid(True)
-plt.plot(t_arr, r_arr, linewidth=2)
-plt.title('Fuel Grain Burn over Time')
-plt.xlabel('Time (s)')
-plt.ylabel('Fuel Grain Burn Rate (r) [in]')
-plt.show()
-
-# Combustion Chamber Profile
-plt.figure()
-plt.grid(True)
-plt.plot(t_arr, V_chmb_arr, linewidth=2)
-plt.title('Combustion Chamber Volume vs. Time')
-plt.xlabel('Time (s)')
-plt.ylabel('Combustion Chamber Volume [in^3]')
-plt.show()
+plot_as_subplots(df) # Plot as subplots
+# plot_as_individual(df) # Plot as individual plots
