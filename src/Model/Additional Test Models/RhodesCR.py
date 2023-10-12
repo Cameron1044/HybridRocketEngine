@@ -110,7 +110,7 @@ for i in range(0,int(i_f)):
 # End of For Loop
 
 "----- Plotting -----"
-plt.figure(figsize=(5, 4))
+plt.figure()
 plt.grid(True)
 plt.plot(t_arr, thrust_choked_arr, linewidth=2)
 plt.title('Thrust vs. Time')
@@ -118,7 +118,7 @@ plt.xlabel('Time (s)')
 plt.ylabel('Thrust (lbf)')
 
 # Oxidizer Tank and Combustion Chamber Pressure
-plt.figure(figsize=(5, 4))
+plt.figure()
 plt.grid(True)
 plt.plot(t_arr, p_chmb_arr, linewidth=2, label='Chamber Pressure')
 plt.plot(t_arr, p_tank_arr, linewidth=2, label='Tank Pressure')
