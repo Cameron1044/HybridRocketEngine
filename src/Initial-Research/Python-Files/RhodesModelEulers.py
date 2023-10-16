@@ -71,7 +71,7 @@ for i in range(0,int(i_f)):
     # If chamber exceeds oxidizer tank pressure stop loop.
     if p_ox < p_chmb:
         break
- #test
+
     # Calculating Mass flow of Liquid Oxidizer
     dm_ox_dt = Cd * A * np.sqrt(2 * rho_ox * (p_ox - p_chmb) * 32.2 * 12)
     m_ox = dm_ox_dt*tstep
