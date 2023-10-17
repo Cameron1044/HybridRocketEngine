@@ -9,7 +9,7 @@ lbf2N = 4.448221615;        % [N/lbf]
 
 % Constants
 Ru = 8.3145;                % [J/(mol*K)]
-P_amb = 80.8E3;             % [Pa]
+P_amb = 102675.3;             % [Pa]
 
 % Oxidizer Tank
 V_t = 3E-3;                 % [m^3] Tank Volume
@@ -20,23 +20,24 @@ rho_o = 1226;               % [kg/m^3] Liquid Nitrous Density @ 273 K
 % n_i = 4;                    % Number of Injector Holes
 % d_i = 1/8 * in2m;           % [m] Diameter of Injector Holes
 % A_i = n_i * pi * (d_i/2)^2; % [m^2] Area of Injector
-A_i = 1.02E-05;
+A_i = 9.4e-6;
 C_d = 0.4;                  % Coefficient of Discharge Injector
 
 % Fuel Grain
 L = 12 * in2m;              % [m]
 fuel_OD = 1.688 * in2m;     % [m]
 fuel_ID = 1.35 * in2m;      % [m]
-rho_f = 2767.99;            % [kg/m^3]
+rho_f = 919;                % [kg/m^3]
     % Combustion Chamber Gas Chemical Constants
 T_c = 5583.19;              % [K]
-M_c = 39.992 / 1000;        % [g/mol --> kg/mol] Effective Molecular Weight
+M_c = 39.992/1000;          % [g/mol --> kg/mol] Effective Molecular Weight
 gam = 1.1587;               % [1]
     % St. Roberts Law
-n = 0.8;                    % [1]   Fuel Regression Constant 1
-a_m = 0.0007;               %  Fuel Regression Constant 2
-convert_a = (0.0254^(1+2*(n)))*(0.453592^(-n)); % [m^(1+2n)kg^(-n)s^(n-1)]
-a = convert_a * a_m;
+n = 0.681;                    % [1]   Fuel Regression Constant 1
+a = 2.85E-5;               %  Fuel Regression Constant 2
+% 
+% convert_a = (0.0254^(1+2*(n)))*(0.453592^(-n)); % [m^(1+2n)kg^(-n)s^(n-1)]
+% a = convert_a * a_m;
 
 P_c_i = P_amb;              % [Pa] Initial Chamber Pressure
 
@@ -59,13 +60,12 @@ m_f_i = rho_f*pi*(fuel_OD^2-fuel_ID^2)/4; % [kg] Fuel Grain Mass
 port_i = fuel_ID/2;             % [m] Initial Port radius
 R = Ru/M_c;                     % Combustion Gas constant [m^2 / (K * s^2)]
 
-tspan = [0 8];
-var_i = [P_c_i; P_o_i; m_f_i; m_o_i; port_i; 0];
+tspan = [0 10];
+var_i = [P_c_i; P_o_i; m_f_i; m_o_i; port_i; 0; V_u_i];
 
 %% Run ode45
 
 opts = odeset('RelTol',1e-3,'AbsTol',1e-3);
-
 [t, var] = ode45(@(t, var) NakkaHybrid(t, var, Ru, gam, T_c, M_c, L, rho_f, rho_o, a, n, A_i, C_d, A_t, P_o_i, V_u_i, V_t, P_amb, psi2Pa, fuel_OD), tspan, var_i,opts);
 
 %% Recover Data
@@ -76,10 +76,10 @@ m_o = var(:,4);
 port = var(:,5);
 I = var(:,6);
 
-der = zeros(length(t),6);
+der = zeros(length(t),7);
 
 for i = 1:length(t)
-    der(i,:) = NakkaHybrid(t(i), var(i,:), Ru, gam, T_c, M_c, L, rho_f, rho_o, a_m, n, A_i, C_d, A_t, P_o_i, V_u_i, V_t, P_amb, psi2Pa, fuel_OD);
+    der(i,:) = NakkaHybrid(t(i), var(i,:), Ru, gam, T_c, M_c, L, rho_f, rho_o, a, n, A_i, C_d, A_t, P_o_i, V_u_i, V_t, P_amb, psi2Pa, fuel_OD);
 end
 
 dPc_dt = der(:,1);
@@ -161,17 +161,19 @@ function var_dot = NakkaHybrid(t, var, Ru, gam, T_c, M_c, L, rho_f, rho_o, a, n,
     P_o = var(2);       % Oxidizer Tank Pressure
     m_f = var(3);       % Fuel grain mass
     m_o = var(4);       % Liquid Oxidizer mass
-    port = var(5);      % Port radius
+    r = var(5);      % Port radius
+    V = var(7);
     
     R = Ru/M_c; 
-    A_b = 2*pi*port*L;      % [m^2] Burning Surface Area 
-    V_c = pi*port.^2*L;     % [m^3] Chamber Volume
+    A_b = 2*pi*r*L;      % [m^2] Burning Surface Area 
+    A_p = pi*r^2;
+    V_c = pi*r.^2*L;     % [m^3] Chamber Volume
     rho_c = P_c/(R*T_c);    % [kg/m^3] Chamber Density
     P_e = P_amb;% I question this but if you're going for a totally optimal design then sure
         % Perfect expansion will address later
 
     % Events at Each Time step
-    if port >= fuel_OD/2
+    if r >= fuel_OD/2
         % If the port radius burns more than the Outer Fuel Grain Radius
         A_b = 0;
         a = 0;
@@ -188,24 +190,30 @@ function var_dot = NakkaHybrid(t, var, Ru, gam, T_c, M_c, L, rho_f, rho_o, a, n,
         P_c = P_amb;
     end
     
+    % Oxidizer mass flow rate
+    dmo_dt = -A_i*C_d*sqrt(2*rho_o*(P_o-P_c));
+
     % Burn Rate 
-    r = a*(P_c/psi2Pa)^n;
+    dr_dt = -a*(dmo_dt/A_p)^n;
 
     % Fuel mass flow rate
-    mdot_f = -A_b*rho_f*r; 
-    
-    % Oxidizer mass flow rate
-    mdot_o = -A_i*C_d*sqrt(2*rho_o*(P_o-P_c));
+    dmf_dt = -A_b*rho_f*dr_dt;
 
     % Tank pressure derivative
-    dPo_dt = -P_o_i*V_u_i/(V_t - m_o/rho_o)^2 * A_i*C_d*sqrt(2*(P_o-P_c)/rho_o); 
+    % dPo_dt = -P_o_i*V_u_i/(V_t - m_o/rho_o)^2 * A_i*C_d*sqrt(2*(P_o-P_c)/rho_o); 
+    dVu_dt = -dmo_dt/rho_o;
+    dPo_dt = -(P_o_i*V_u_i)/V^2 * dVu_dt;
 
     % Chamber pressure derivative
-    dPc_dt = R*T_c./V_c .* (A_b*r*(rho_f-rho_c) - mdot_o - P_c*A_t*sqrt(gam/(R*T_c))*(2/(gam+1))^((gam+1)/(2*(gam-1))));   
+
+    fuel = A_b*dr_dt*(rho_f-rho_c);
+    dm_nozzle_dt = P_c*A_t*sqrt(gam/(R*T_c))*(2/(gam+1))^((gam+1)/(2*(gam-1))); 
+
+    dPc_dt = R*T_c./V_c .* (fuel - dmo_dt - dm_nozzle_dt);   
 
     % Thrust Calculation
     F = A_t*P_c*sqrt(2*gam^2/(gam-1) * (2/(gam+1))^((gam+1)/(gam-1)) * (1-(P_e/P_c)^((gam-1)/gam))); % + (P_e-P_amb)*A_e;
     
     %t
-    var_dot = [dPc_dt; dPo_dt; mdot_f; mdot_o; r; F];
+    var_dot = [dPc_dt; dPo_dt; dmf_dt; dmo_dt; dr_dt; F; dVu_dt];
 end
