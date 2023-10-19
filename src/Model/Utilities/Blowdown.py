@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 
 class BlowdownModel():
     def __init__(self):
-        self.A_i = 0
-        self.C_d = 0
-        self.rho_ox = 0
-        self.Po_i = 0
-        self.V_u_i = 0
+        self.A_i = 0 # Injector Area (m^2)
+        self.C_d = 0 # Injector Coefficient of Discharge
+        self.rho_ox = 0 # Density of Oxidizer (N20)
+        self.Po_i = 0 # Initial Chamber Pressure 
+        self.V_u_i = 0 # Initial Ullage Volume 
 
 
     def OxidizerMassDeriv(self, Po, P_c): # Changing inputs are tank pressure and chamber pressure
@@ -32,7 +32,7 @@ class BlowdownModel():
 
         return dVu_dt
 
-    def PressureDeriv(self, Vu):
+    def TankPressureDeriv(self, Vu):
 
         # Take necessary constant values from init dunder function
         Po_i = self.Po_i
@@ -44,7 +44,10 @@ class BlowdownModel():
         return dP0_dt
     
     def BlowdownModel(self, Po, Pc, Vu, dmo_dt):
+
+        # Calculate all blowdown derivatives
         dmo_dt = self.OxidizerMassDeriv(self,Po,Pc)
         dVu_dt = self.VolDeriv(self,dmo_dt)
-        dP0_dt = self.PressureDeriv(self, Vu)
+        dP0_dt = self.TankPressureDeriv(self, Vu)
+
         return dmo_dt, dVu_dt, dP0_dt
