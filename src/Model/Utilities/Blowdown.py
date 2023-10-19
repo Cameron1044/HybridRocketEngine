@@ -4,19 +4,15 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
 class BlowdownModel():
-    def __init__(self, input1=0):
-        self.input1 = input1
+    def __init__(self):
         self.A_i = 0
         self.C_d = 0
         self.rho_ox = 0
-        self.P_0_i = 0
+        self.Po_i = 0
         self.V_u_i = 0
 
-    def IdealGas(self):
-        number = self.input1**2
-        return dP_dt
 
-    def OxidizerMassDeriv(self, P_0, P_c): # Changing inputs are tank pressure and chamber pressure
+    def OxidizerMassDeriv(self, Po, P_c): # Changing inputs are tank pressure and chamber pressure
         
         # Take necessary constant values from init dunder function
         A_i = self.A_i
@@ -24,7 +20,7 @@ class BlowdownModel():
         rho_ox = self.rho_ox
 
         # Define Derivative for Oxidizer Mass Flow from Bernoulli's Equation
-        dmo_dt = -A_i*C_d*np.sqrt(2*rho_ox*(P_0 - P_c))
+        dmo_dt = -A_i*C_d*np.sqrt(2*rho_ox*(Po - P_c))
         return dmo_dt
 
     def VolDeriv(self, dmo_dt):
@@ -36,19 +32,19 @@ class BlowdownModel():
 
         return dVu_dt
 
-    def PressureDeriv(self, V):
+    def PressureDeriv(self, Vu):
 
         # Take necessary constant values from init dunder function
-        P_0_i = self.P_0_i
+        Po_i = self.Po_i
         V_u_i = self.V_u_i
 
         # Define Derivative of Tank Pressure from Ideal Gas & constant Temperature assumption
-        dP0_dt = -((P_0_i * V_u_i)/V**2)
+        dP0_dt = -((Po_i * V_u_i)/Vu**2)
 
         return dP0_dt
     
-    def BlowdownModel(self):
-        dmo_dt = self.OxidizerMassDeriv()
-        dVu_dt = self.VolDeriv()
-        dP0_dt = self.PressureDeriv()
+    def BlowdownModel(self, Po, Pc, Vu, dmo_dt):
+        dmo_dt = self.OxidizerMassDeriv(self,Po,Pc)
+        dVu_dt = self.VolDeriv(self,dmo_dt)
+        dP0_dt = self.PressureDeriv(self, Vu)
         return dmo_dt, dVu_dt, dP0_dt
