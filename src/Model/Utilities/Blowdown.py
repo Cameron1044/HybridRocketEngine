@@ -4,13 +4,12 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
 class BlowdownModel():
-    def __init__(self):
-        self.A_i = 0 # Injector Area (m^2)
-        self.C_d = 0 # Injector Coefficient of Discharge
-        self.rho_ox = 0 # Density of Oxidizer (N20)
-        self.Po_i = 0 # Initial Chamber Pressure 
-        self.V_u_i = 0 # Initial Ullage Volume 
-
+    def __init__(self, inputs):
+        self.A_inj = inputs["A_inj"]
+        self.C_d = inputs["C_d"]
+        self.rho_ox = inputs["rho_ox"]
+        self.Po_i = inputs["P_tank"]
+        self.V_u_i = inputs["V_tank"] * inputs["ullage_fraction"]
 
     def OxidizerMassDeriv(self, Po, P_c): # Changing inputs are tank pressure and chamber pressure
         

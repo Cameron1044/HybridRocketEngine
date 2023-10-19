@@ -7,7 +7,7 @@ from src.Model.Utilities.Blowdown import BlowdownModel
 from src.Model.Utilities.Combustion import CombustionModel
 
 class Model():
-    def __init__(self):
+    def __init__(self, initialInputs):
         self.iterations = 500
         self.tspan = [0, 10]
         self.y0 = [0, 0, 0, 0, 0]

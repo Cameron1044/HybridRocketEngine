@@ -5,55 +5,67 @@ import matplotlib.pyplot as plt
 
 class CombustionModel():
     def __init__(self):
+        self.a = 0
+        self.n = 0
+        self.L = 0
+        self.Ru = 0
+        self.T_chmb = 0
+        self.M_chmb = 0
+        self.gamma = 0
+        self.rho_f = 0
+        self.A_t = 0
+        
+    def fuelGrainState(self, r, Pc):
+        # Take necessary constant valus from init dunder function
+        Ru = self.Ru
+        L = self.L
+        M_chmb = self.M_chmb
+        T_chmb = self.T_chmb
 
-        self.rho_f = 0 # Density of Fuel Material
-        self.a = 0 # Marxman Constant #1 (Fuel Dependant)
-        self.n = 0 # Marxman Constant #2 (Fuel Dependant)
-        self.R = 0 # Specific Gas Constant (Fuel Dependent)
-        self.Tc = 0 # Chamber Temperature [K]
-        self.At = 0 # Throat Area [m^2]
-    
-    def BurnRate(self, dmo_dt, A_port): # Variables that change throughout burn time
+        # Calculate the current state of the combustion chamber and fuel grain
+        R_prime = Ru / M_chmb
+        A_p = np.pi * r**2
+        A_b = 2 * np.pi * r * L
+        V_chmb = A_p * L
+        rho_chmb = Pc / (R_prime * T_chmb)
+        return A_p, A_b, V_chmb, rho_chmb, R_prime
+
+    def fuelRegression(self, dmo_dt, A_p):
         # Take necessary constant values from init dunder function
         a = self.a
-        n= self.n
+        n = self.n
 
-        # Define Burn Rate from Marxman's Equation
-        dr_dt = -a*(dmo_dt/A_port)**(n)
-
+        # Define Derivative for Fuel Grain port radius from Marxman Fuel Regression
+        dr_dt = a * (dmo_dt / A_p)**n
         return dr_dt
-    
-    def FuelMassFlow(self, A_b, dr_dt): # Variables that change throughout burn time
+
+    def mfDeriv(self, dr_dt, A_b):
         # Take necessary constant values from init dunder function
         rho_f = self.rho_f
-
-        # Define Fuel Mass Flow Derivative
-        dmf_dt = -A_b*rho_f*dr_dt
+        
+        # Define Derivative for Fuel Mass Flow from Marxman Fuel Regression
+        dmf_dt = -A_b * rho_f * dr_dt
         return dmf_dt
 
-    def ChamberPressureDeriv(self, dr_dt, Ab, Pc, Vc, dmo_dt):
-
+    def PChmbDeriv(self, A_b, V_chmb, rho_chmb, R_prime, dr_dt, dmo_dt, Pc):
         # Take necessary constant values from init dunder function
         rho_f = self.rho_f
-        R = self.R
-        Tc = self.Tc
-        At = self.At
-        gamma = self.gamma
-        # Intermediate calculation of "Chamber Density", Fuel Accumulation Rate, and Nozzle Mass Flow Rate
-        rho_c = Pc/(R*Tc)
-        fuel = Ab*dr_dt*(rho_f-rho_c)
-        dm_nozzle_dt = Pc*At*np.sqrt(gamma/(R*Tc))*(2/(gamma+1))**((gamma+1)/(2*(gamma-1))); 
+        A_t = self.A_t
+        gam = self.gamma
+        M_chmb = self.M_chmb
+        T_chmb = self.T_chmb
 
-        # Calculate Derivative of Chamber Pressure 
-        dPc_dt = R*(Tc/Vc) * (fuel - dmo_dt - dm_nozzle_dt); 
-
+        # Calculating Fuel Mass relations from gas generation and fuel regression
+        FuelMassRelation = A_b * dr_dt * (rho_f - rho_chmb)
+        # Calculating mass flow through a Nozzle
+        NozzleMass = Pc * A_t * np.sqrt(gam / (R_prime * T_chmb)) * (2 / (gam + 1))^((gam + 1)/(2 * (gam - 1))); 
+        # Define Derivative for Oxidizer Mass Flow from Bernoulli's Equation
+        dPc_dt = (R_prime * T_chmb/V_chmb) * (FuelMassRelation - dmo_dt - NozzleMass);   
         return dPc_dt
-    
-    def combustionModel(self, dmo_dt, Pc, A_port, Ab, Vc):
 
-        # Calculate All Combustion Derivatives
-        dr_dt =  self.BurnRate(self,dmo_dt, A_port)
-        dmf_dt = self.FuelMassFlow(self, Ab, dr_dt)
-        dPc_dt = self.ChamberPressureDeriv(self, dr_dt, Ab, Pc, Vc, dmo_dt)
-
-        return dmf_dt, dr_dt, dPc_dt
+    def combustionModel(self, dmo_dt, Pc, r):
+        A_p, A_b, V_chmb, rho_chmb, R_prime = self.fuelGrainState(r, Pc)
+        dr_dt = self.fuelRegression(dmo_dt, A_p)
+        dmf_dt = self.mfDeriv(dr_dt, A_b)
+        dPc_dt = self.PChmbDeriv(A_b, V_chmb, rho_chmb, R_prime, dr_dt, dmo_dt, Pc)
+        return dr_dt, dmf_dt, dPc_dt
