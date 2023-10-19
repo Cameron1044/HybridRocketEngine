@@ -15,11 +15,11 @@ def units(value, conversion, n=1):
         "in": 1/39.37,
         "ft": 1/3.281,
         # Surfrace Area --> m2
-        "in2": 1/1550,
-        "ft2": 1/10.764,
+        "in^2": 1/1550,
+        "ft^2": 1/10.764,
         # Volume --> m3
-        "in3": 1/61020,
-        "ft3": 1/35.315,
+        "in^3": 1/61020,
+        "ft^3": 1/35.315,
         # Pressure --> Pa
         "psi": 6895,
         # Mass --> kg
@@ -27,7 +27,7 @@ def units(value, conversion, n=1):
         # Force --> N
         "lbf": 4.448,
         # Density --> kg/m^3
-        "lbm/ft3": 16.01846337396,
+        "lbm/ft^3": 16.01846337396,
 
         ## For Units that are Metric
         # Length --> m
@@ -35,13 +35,13 @@ def units(value, conversion, n=1):
         "cm": 1/100,
         "mm": 1/1000,
         # Surfrace Area --> m2
-        "m2": 1,
-        "cm2": 1/10000,
-        "mm2": (1e-6),
+        "m^2": 1,
+        "cm^2": 1/10000,
+        "mm^2": (1e-6),
         # Volume --> m3
-        "m3": 1,
-        "cm3": (1e-6),
-        "mm3": (1e-9),
+        "m^3": 1,
+        "cm^3": (1e-6),
+        "mm^3": (1e-9),
         "L": 1/1000,
         # Pressure --> Pa
         "Pa": 1,
@@ -53,7 +53,16 @@ def units(value, conversion, n=1):
         "N": 1,
         "kN": 1000,
         # Density --> kg/m^3
-        "kg/m3": 1,
+        "kg/m^3": 1,
+        # Molecular Weight --> kg/mol
+        "g/mol": 1/1000,
+        # Temperature --> K
+        "K": 1,
+        # Gas Constant --> J/(mol*K)
+        "J/(mol*K)": 1,
+
+        ## Unitless
+        "unitless": 1,
 
         ## For a Burn coefficient
         "a": (0.0254**(1 + 2*(n)))*(0.453592**(-n))
