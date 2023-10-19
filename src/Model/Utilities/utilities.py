@@ -129,8 +129,8 @@ def ToEnglish(value, conversion):
         "kg": 2.205,
         "g": 1/453.6,
         # Force --> lbf
-        "N": 4.448,
-        "kN": 224.8,
+        "N": 1/4.448,
+        "kN": 1/224.8,
         # Density --> lbm/in^3
         "kg/m^3": 1 / 27680,
         # Molecular Weight --> lb/lbmole

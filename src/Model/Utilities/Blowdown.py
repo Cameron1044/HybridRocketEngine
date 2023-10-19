@@ -11,18 +11,18 @@ class BlowdownModel():
         self.Po_i = inputs["P_tank"]
         self.V_u_i = inputs["V_tank"] * inputs["ullage_fraction"]
 
-    def OxidizerMassDeriv(self, Po, P_c): # Changing inputs are tank pressure and chamber pressure
+    def oxidizerMassDeriv(self, Po, P_c): # Changing inputs are tank pressure and chamber pressure
         
         # Take necessary constant values from init dunder function
-        A_i = self.A_i
+        A_inj = self.A_inj
         C_d = self.C_d
         rho_ox = self.rho_ox
 
         # Define Derivative for Oxidizer Mass Flow from Bernoulli's Equation
-        dmo_dt = -A_i*C_d*np.sqrt(2*rho_ox*(Po - P_c))
+        dmo_dt = -A_inj*C_d*np.sqrt(2*rho_ox*(Po - P_c))
         return dmo_dt
 
-    def VolDeriv(self, dmo_dt):
+    def volDeriv(self, dmo_dt):
         # Take necessary constant values from init dunder function
         rho_ox = self.rho_ox
 
@@ -31,22 +31,19 @@ class BlowdownModel():
 
         return dVu_dt
 
-    def TankPressureDeriv(self, Vu):
+    def pressureDeriv(self, Vu, dVu_dt):
 
         # Take necessary constant values from init dunder function
         Po_i = self.Po_i
         V_u_i = self.V_u_i
 
         # Define Derivative of Tank Pressure from Ideal Gas & constant Temperature assumption
-        dP0_dt = -((Po_i * V_u_i)/Vu**2)
+        dPo_dt = -((Po_i * V_u_i)/Vu**2) * dVu_dt
 
-        return dP0_dt
+        return dPo_dt
     
-    def BlowdownModel(self, Po, Pc, Vu, dmo_dt):
-
-        # Calculate all blowdown derivatives
-        dmo_dt = self.OxidizerMassDeriv(self,Po,Pc)
-        dVu_dt = self.VolDeriv(self,dmo_dt)
-        dP0_dt = self.TankPressureDeriv(self, Vu)
-
-        return dmo_dt, dVu_dt, dP0_dt
+    def blowdownModel(self, Po, Pc, Vu):
+        dmo_dt = self.oxidizerMassDeriv(Po, Pc)
+        dVu_dt = self.volDeriv(dmo_dt)
+        dPo_dt = self.pressureDeriv(Vu, dVu_dt)
+        return dmo_dt, dPo_dt, dVu_dt

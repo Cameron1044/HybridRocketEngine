@@ -4,16 +4,17 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
 class CombustionModel():
-    def __init__(self):
-        self.a = 0
-        self.n = 0
-        self.L = 0
-        self.Ru = 0
-        self.T_chmb = 0
-        self.M_chmb = 0
-        self.gamma = 0
-        self.rho_f = 0
-        self.A_t = 0
+    def __init__(self, inputs):
+        self.a = inputs["a"]
+        self.n = inputs["n"]
+        self.L = inputs["L_fuel"]
+        self.Ru = inputs["Ru"]
+        self.T_chmb = inputs["T"]
+        self.M_chmb = inputs["M"]
+        self.gamma = inputs["gamma"]
+        self.rho_f = inputs["rho_fuel"]
+        self.Pe = inputs["P_amb"]
+        self.A_t = np.pi*(inputs["d_t"]/2)**2
         
     def fuelGrainState(self, r, Pc):
         # Take necessary constant valus from init dunder function
@@ -36,7 +37,7 @@ class CombustionModel():
         n = self.n
 
         # Define Derivative for Fuel Grain port radius from Marxman Fuel Regression
-        dr_dt = a * (dmo_dt / A_p)**n
+        dr_dt = a * (-dmo_dt / A_p)**n
         return dr_dt
 
     def mfDeriv(self, dr_dt, A_b):
@@ -58,7 +59,7 @@ class CombustionModel():
         # Calculating Fuel Mass relations from gas generation and fuel regression
         FuelMassRelation = A_b * dr_dt * (rho_f - rho_chmb)
         # Calculating mass flow through a Nozzle
-        NozzleMass = Pc * A_t * np.sqrt(gam / (R_prime * T_chmb)) * (2 / (gam + 1))^((gam + 1)/(2 * (gam - 1))); 
+        NozzleMass = Pc * A_t * np.sqrt(gam / (R_prime * T_chmb)) * (2 / (gam + 1))**((gam + 1)/(2 * (gam - 1))); 
         # Define Derivative for Oxidizer Mass Flow from Bernoulli's Equation
         dPc_dt = (R_prime * T_chmb/V_chmb) * (FuelMassRelation - dmo_dt - NozzleMass);   
         return dPc_dt
@@ -68,4 +69,6 @@ class CombustionModel():
         dr_dt = self.fuelRegression(dmo_dt, A_p)
         dmf_dt = self.mfDeriv(dr_dt, A_b)
         dPc_dt = self.PChmbDeriv(A_b, V_chmb, rho_chmb, R_prime, dr_dt, dmo_dt, Pc)
-        return dr_dt, dmf_dt, dPc_dt
+
+        F = self.A_t*Pc*np.sqrt(2*self.gamma**2/(self.gamma-1) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(self.Pe/Pc)**((self.gamma-1)/self.gamma)))
+        return dr_dt, dmf_dt, dPc_dt, F
