@@ -76,13 +76,13 @@ def ToMetric(value, conversion, n=1):
     return value * conversionDict[conversion]
 
 def ToEnglish(value, conversion):
-    ## To take in a value and the current unit it is in to change it into metric
+    ## To take in a value and the current unit it is in to change it into English
     ## INPUTS: value - the value we want to convert
     ##         unit  - the unit that will be changed to metric
     ##         n     - Fuel Regression constant used to calculate a
     ##
-    ## OUTPUTS: The Value will have it's units changed into metric / SI units
-    ##          If the unit is already in metric, nothing will happen
+    ## OUTPUTS: The Value will have it's units changed into English / Imperial units
+    ##          If the unit is already in English, nothing will happen
     conversionDict = {
         ## For Units that are English
         # Length --> in
