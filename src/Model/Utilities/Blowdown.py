@@ -9,7 +9,7 @@ class BlowdownModel():
     #   Governing Equations                             #
     #       - Ideal Gas Law and Equation of State       #
     #       - Conversation of Mass                      #
-    #       - Bernoulli's Compressible Flow             #
+    #       - Bernoulli's Incompressible Flow           #
     ##### ##### ##### ##### ##### ##### ##### ##### #####
     def __init__(self, inputs):
         # Purpose:  Initiates the class
