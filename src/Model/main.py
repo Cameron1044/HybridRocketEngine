@@ -26,19 +26,19 @@ initialInputs = {
     "n": ToMetric(0.681, 'unitless'),
     "a": ToMetric(2.85E-5, 'unitless'),
     ## Combustion Fuel Properties
-    # "gamma": ToMetric(1.2448, 'unitless'),
-    # "M": ToMetric(27.442, 'g/mol'),
-    # "T": ToMetric(3474, 'K'),
+    "gamma": ToMetric(1.2448, 'unitless'),
+    "M": ToMetric(27.442, 'g/mol'),
+    "T": ToMetric(3474, 'K'),
     #### Fuel Grain
     "L_fuel": ToMetric(12, 'in'),
     "OD_fuel": ToMetric(3.375, 'in'),
     "ID_fuel": ToMetric(2.8, 'in'),
     #### Nozzle
     "d_t": ToMetric(0.7, 'in'),
-    #### Ambient Conditions
-    # "P_amb": ToMetric(102675.3, 'Pa'),
-    # ##### CONSTANTS #####
-    # "Ru": ToMetric(8.3143, 'J/(mol*K)'),
+    ### Ambient Conditions
+    "P_amb": ToMetric(102675.3, 'Pa'),
+    ##### CONSTANTS #####
+    "Ru": ToMetric(8.3143, 'J/(mol*K)'),
 }
 
 # initialInputs['T'] = ToMetric(4000, 'K')
