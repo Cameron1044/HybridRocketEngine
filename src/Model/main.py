@@ -4,10 +4,11 @@ import matplotlib.pyplot as plt
 from tabulate import tabulate
 import pandas as pd
 import pprint
+import warnings
 
 from Utilities.ChemicalProperties import ChemicalProperties
 from Utilities.Model import Model
-from Utilities.utilities import ToMetric, ToEnglish
+from Utilities.utilities import ToMetric, ToEnglish, plot_graph
 
 initialInputs = {
     # Purpose:  Dictionary of Initial Inputs, organized by section
@@ -21,14 +22,10 @@ initialInputs = {
     "A_inj": ToMetric(1.4e-5, 'm^2'),
     "C_d": ToMetric(0.4, 'unitless'),
     #### Fuel Properties
-    "rho_fuel": ToMetric(919, 'kg/m^3'),
+    "rho_fuel": ToMetric(1994, 'kg/m^3'),
     ## Fuel Regression Properties
-    "n": ToMetric(0.681, 'unitless'),
-    "a": ToMetric(2.85E-5, 'unitless'),
-    ## Combustion Fuel Properties
-    "gamma": ToMetric(1.2448, 'unitless'),
-    "M": ToMetric(27.442, 'g/mol'),
-    "T": ToMetric(3474, 'K'),
+    "n": ToMetric(1.681, 'unitless'),
+    "a": ToMetric(9.33E-8, 'unitless'),
     #### Fuel Grain
     "L_fuel": ToMetric(12, 'in'),
     "OD_fuel": ToMetric(3.375, 'in'),
@@ -41,6 +38,10 @@ initialInputs = {
     "Ru": ToMetric(8.3143, 'J/(mol*K)'),
 }
 
+# "rho_fuel": ToMetric(919, 'kg/m^3'),
+# ## Fuel Regression Properties
+# "n": ToMetric(0.681, 'unitless'),
+# "a": ToMetric(2.85E-5, 'unitless'),
 # initialInputs['T'] = ToMetric(4000, 'K')
 # initialInputs['M'] = ToMetric(30.169, 'g/mol')
 # initialInputs['gamma'] = ToMetric(1.2516, 'unitless')
@@ -55,228 +56,151 @@ modelZK = Model(initialInputs, ZK=True)
 modelBernoulli = Model(initialInputs, ZK=False)
 # Call for the ODE45 Intergration function (solve_ivp)
 dfZK = modelZK.ODE45()
-dfBernoulli = modelBernoulli.ODE45()
+dfBe = modelBernoulli.ODE45()
 
-#### PLOTTING ####
 ## Formulate CSV files and will put into CSV folder
 # print(tabulate(df.iloc[::10], headers='keys', tablefmt='fancy_grid')) # Print every 10th row
-# dfZK.to_csv("src/Model/CSV/current_data.csv", index=False) # Save dataframe to csv
-
-# chem = ChemicalProperties()
-# rho_ox = chem.densityN2OLiquid(initialInputs['T_tank'])
-
-# moi = rho_ox*initialInputs['V_tank']*0.2
 
 totalImpulseZK = dfZK['impulse'].iloc[-1]
-totalImpulseBernoulli = dfBernoulli['impulse'].iloc[-1]
+totalImpulseBernoulli = dfBe['impulse'].iloc[-1]
 
-IspZK = totalImpulseZK/ToEnglish(modelZK.mt_i, 'kg')
-IspBernoulli = totalImpulseBernoulli/ToEnglish(modelBernoulli.mt_i, 'kg')
+totalFinalMassZK = dfZK['mox'].iloc[-1] + dfZK['mf'].iloc[-1]
+totalFinalMassBernoulli = dfBe['mox'].iloc[-1] + dfBe['mf'].iloc[-1]
 
-# print(ToEnglish(model.mt_i, 'kg'))
-print(f'Total Impulse ZK: {totalImpulseZK} [lbm-s]')
-print(f'Total Impulse Bernoulli: {totalImpulseBernoulli} [lbm-s]')
-print(f'Specific Impulse ZK: {IspZK} [s]')
-print(f'Specific Impulse Bernoulli: {IspBernoulli} [s]')
+totalMassConsumedZK = ToEnglish(modelZK.mt_i, 'kg') - totalFinalMassZK
+totalMassConsumedBernoulli = ToEnglish(modelBernoulli.mt_i, 'kg') - totalFinalMassBernoulli
 
-# # ## Plotting Values from df model
-# # # Thrust Over Time
-# plt.figure()
-# plt.grid(True)
-# plt.plot(df['time'], df['cstar'], linewidth=2)
-# plt.title('Thrust vs. Time')
-# plt.xlabel('Time (s)')
-# plt.ylabel('Thrust (lbf)')
+IspZK = totalImpulseZK/totalMassConsumedZK
+IspBernoulli = totalImpulseBernoulli/totalMassConsumedBernoulli
 
-## Plotting Values from df model
-# Thrust Over Time
-plt.figure()
-plt.plot(dfZK['time'], dfZK['thrust'], linewidth=2, label="ZK")
-plt.plot(dfBernoulli['time'], dfBernoulli['thrust'], linewidth=2, label="Bernoulli")
-plt.grid(which='both', linestyle='--', linewidth=0.5)
-plt.legend(loc="best")
-plt.title('Thrust vs. Time')
-plt.xlabel('Time (s)')
-plt.ylabel('Thrust (lbf)')
+### Console Output ###
+print("\n")
+print("-------------------- Ullage Fraction -------------------")
+print(f'ZK:        {np.round(modelZK.blowdown.ullageFraction, 3)} [unitless]')
+print(f'Bernoulli: {np.round(modelBernoulli.blowdown.ullageFraction, 3)} [unitless]')
+print("-------------------- Total Mass -------------------")
+print(f'ZK:        {np.round(ToEnglish(modelZK.mt_i, "kg"), 3)} [lbm]')
+print(f'Bernoulli: {np.round(ToEnglish(modelBernoulli.mt_i, "kg"), 3)} [lbm]')
+print("-------------------- Mass Burned -------------------")
+print(f'ZK:        {np.round(totalMassConsumedZK, 3)} [lbm]')
+print(f'Bernoulli: {np.round(totalMassConsumedBernoulli, 3)} [lbm]')
+print("-------------------- Total Impulse -------------------")
+print(f'ZK:        {np.round(totalImpulseZK, 3)} [lbf-s]')
+print(f'Bernoulli: {np.round(totalImpulseBernoulli, 3)} [lbf-s]')
+print("-------------------- Specific Impulse -------------------")
+print(f'ZK:        {np.round(IspZK, 3)} [s]')
+print(f'Bernoulli: {np.round(IspBernoulli, 3)} [s]')
+print("\n")
 
-# Impulse Over Time
-plt.figure()
-plt.plot(dfZK['time'], dfZK['impulse'], linewidth=2, label="ZK")
-plt.plot(dfBernoulli['time'], dfBernoulli['impulse'], linewidth=2, label="Bernoulli")
-plt.grid(which='both', linestyle='--', linewidth=0.5)
-plt.legend(loc="best")
-plt.title('Impulse vs. Time')
-plt.xlabel('Time (s)')
-plt.ylabel('Total Impulse Produced (lbf-s)')
+#### PLOTTING ####
+plot_graph('Combustion Chamber Temperature Over Time',
+            'Time (s)',
+            'Temperature (K)',
+            {'y': dfZK['T_chmb'], 'x': dfZK['time'], 'label': 'Chamber Temperature ZK'},
+            {'y': dfBe['T_chmb'], 'x': dfBe['time'], 'label': 'Chamber Temperature Bernoulli'})
 
-# OF Ratio Over Time
-plt.figure()
-plt.plot(dfZK['time'], dfZK['OF'], linewidth=2, label="ZK")
-plt.plot(dfBernoulli['time'], dfBernoulli['OF'], linewidth=2, label="Bernoulli")
-plt.grid(which='both', linestyle='--', linewidth=0.5)
-plt.legend(loc="best")
-plt.title('Mixture Ratio vs. Time')
-plt.xlabel('Time (s)')
-plt.ylabel('O/F Ratio')
+plot_graph('Combustion Chamber Molecular Weight Over Time',
+            'Time (s)',
+            'Molecular Weight (g/mol)',
+            {'y': dfZK['M_chmb'], 'x': dfZK['time'], 'label': 'Chamber Molecular Weight ZK'},
+            {'y': dfBe['M_chmb'], 'x': dfBe['time'], 'label': 'Chamber Molecular Weight Bernoulli'})
 
-# Fuel Grain Port Radius Over Time
-plt.figure()
-plt.plot(dfZK['time'], dfZK['r'], linewidth=2, label="Fuel Grain Port Radius ZK")
-plt.plot(dfBernoulli['time'], dfBernoulli['r'], linewidth=2, label="Fuel Grain Port Radius Bernoulli")
-plt.axhline(y=initialInputs['OD_fuel']/2/0.0254, color='r', linestyle='--', linewidth=2, label="Fuel Grain Outer Diameter")
-plt.grid(which='both', linestyle='--', linewidth=0.5)
-plt.legend(loc="best")
-plt.title("Port Radius vs Time")
-plt.xlabel("Time (s)")
-plt.ylabel("Port Radius (in)")
+plot_graph('Combustion Chamber Gamma Over Time',
+            'Time (s)',
+            'Gamma (unitless)',
+            {'y': dfZK['gamma'], 'x': dfZK['time'], 'label': 'Gamma ZK'},
+            {'y': dfBe['gamma'], 'x': dfBe['time'], 'label': 'Gamma Bernoulli'})
 
-# Rocket Mass Flow Rates Over Time
-plt.figure()
-plt.plot(dfZK['time'], dfZK['dmf'], linewidth=2, label="Fuel Mass Flow ZK")
-plt.plot(dfZK['time'], dfZK['dmox'], linewidth=2, label="Oxidizer Mass Flow ZK")
-plt.plot(dfBernoulli['time'], dfBernoulli['dmf'], linewidth=2, label="Fuel Mass Flow Bernoulli")
-plt.plot(dfBernoulli['time'], dfBernoulli['dmox'], linewidth=2, label="Oxidizer Mass Flow Bernoulli")
-plt.grid(which='both', linestyle='--', linewidth=0.5)
-plt.legend(loc="best")
-plt.title("Rocket Mass Flow Rate over Time")
-plt.xlabel("Time (s)")
-plt.ylabel("Mass Flow Rate (lbm/s)")
+# C* vs. Time
+plot_graph('C* vs. Time', 
+           'Time (s)', 
+           'C* (in/s)',
+           {'y': dfZK['cstar'], 'x': dfZK['time'], 'label': 'ZK'},
+           {'y': dfBe['cstar'], 'x': dfBe['time'], 'label': 'Bernoulli'})
 
-# Rocket Pressure Over Time
-plt.figure()
-plt.plot(dfZK['time'], dfZK['Pc'], linewidth=2, label="Chamber Pressure ZK")
-plt.plot(dfZK['time'], dfZK['Pox'], linewidth=2, label="Oxidizer Tank Pressure ZK")
-plt.plot(dfBernoulli['time'], dfBernoulli['Pc'], linewidth=2, label="Chamber Pressure Bernoulli")
-plt.plot(dfBernoulli['time'], dfBernoulli['Pox'], linewidth=2, label="Oxidizer Tank Pressure Bernoulli")
-plt.grid(which='both', linestyle='--', linewidth=0.5)
-plt.legend(loc="best")
-plt.title("Rocket Pressures Over Time")
-plt.xlabel("Time (s)")
-plt.ylabel("Pressure (psi)")
+# Oxidizer and Fuel Masses over Time
+plot_graph('Rocket Masses Over Time',
+            'Time (s)',
+            'Mass (lbm)',
+            {'y': dfZK['mox'], 'x': dfZK['time'], 'label': 'Oxidizer Mass ZK'},
+            {'y': dfBe['mox'], 'x': dfBe['time'], 'label': 'Oxidizer Mass Bernoulli'},
+            {'y': dfZK['mf'], 'x': dfZK['time'], 'label': 'Fuel Mass ZK', 'linestyle': '--', 'color': 'r'},
+            {'y': dfBe['mf'], 'x': dfBe['time'], 'label': 'Fuel Mass Bernoulli', 'linestyle': ':', 'color': 'g'})
+
+# Rocket Mass Flow Rate over Time
+plot_graph('Rocket Mass Flow Rate over Time', 
+           'Time (s)', 
+           'Mass Flow Rate (lbm/s)',
+           {'y': dfZK['dmf'], 'x': dfZK['time'], 'label': 'Fuel Mass Flow ZK'},
+           {'y': dfBe['dmf'], 'x': dfBe['time'], 'label': 'Fuel Mass Flow Bernoulli'},
+           {'y': dfZK['dmox'], 'x': dfZK['time'], 'label': 'Oxidizer Mass Flow ZK', 'linestyle': '--', 'color': 'r'},
+           {'y': dfBe['dmox'], 'x': dfBe['time'], 'label': 'Oxidizer Mass Flow Bernoulli', 'linestyle': ':', 'color': 'g'})
+
+# Mixture Ratio vs. Time
+plot_graph('Mixture Ratio vs. Time', 
+           'Time (s)', 
+           'O/F Ratio',
+           {'y': dfZK['OF'], 'x': dfZK['time'], 'label': 'ZK'},
+           {'y': dfBe['OF'], 'x': dfBe['time'], 'label': 'Bernoulli'})
+
+# Port Radius vs Time
+plot_graph('Port Radius vs Time', 
+           'Time (s)', 
+           'Port Radius (in)',
+           {'y': dfZK['r'], 'x': dfZK['time'], 'label': 'Fuel Grain Port Radius ZK'},
+           {'y': dfBe['r'], 'x': dfBe['time'], 'label': 'Fuel Grain Port Radius Bernoulli'},
+           {'y': ToEnglish(initialInputs['OD_fuel'], 'm')/2, 'label': 'Fuel Grain Outer Diameter', 'linestyle': ':', 'color': 'r'})
+
+# Impulse vs. Time
+plot_graph('Impulse vs. Time', 
+           'Time (s)', 
+           'Total Impulse Produced (lbf-s)',
+           {'y': dfZK['impulse'], 'x': dfZK['time'], 'label': 'ZK'},
+           {'y': dfBe['impulse'], 'x': dfBe['time'], 'label': 'Bernoulli'})
+
+# Thrust vs. Time
+plot_graph('Thrust vs. Time', 
+           'Time (s)', 
+           'Thrust (lbf)',
+           {'y': dfZK['thrust'], 'x': dfZK['time'], 'label': 'ZK'},
+           {'y': dfBe['thrust'], 'x': dfBe['time'], 'label': 'Bernoulli'})
+
+# Rocket Pressures Over Time
+plot_graph('Rocket Pressures Over Time', 
+           'Time (s)', 
+           'Pressure (psi)',
+           {'y': dfZK['Pc'], 'x': dfZK['time'], 'label': 'Chamber Pressure ZK'},
+           {'y': dfBe['Pc'], 'x': dfBe['time'], 'label': 'Chamber Pressure Bernoulli'},
+           {'y': dfZK['Pox'], 'x': dfZK['time'], 'label': 'Oxidizer Tank Pressure ZK', 'linestyle': '--', 'color': 'r'},
+           {'y': dfBe['Pox'], 'x': dfBe['time'], 'label': 'Oxidizer Tank Pressure Bernoulli', 'linestyle': ':', 'color': 'g'})
+
 plt.show()
 
-# # Define a range of injector areas for analysis
-# a_inj_range = np.linspace(5E-6, 2E-5, 8)
+# Define a mapping dictionary from old column names to desired column names
+column_mapping = {
+    "time": "time (s)",
+    "thrust": "thrust (lbf)",
+    "impulse": "impulse (lbf-s)",
+    "Pc": "Chamber pressure (psi)",
+    "Pox": "Tank pressure (psi)",
+    "mox": "Liquid Oxidizer mass (lbm)",
+    "mf": "Fuel mass (lbm)",
+    "dmox": "Oxidizer mass flow rate (lbm/s)",
+    "dmf": "Fuel mass flow rate (lbm/s)",
+    "OF": "Oixidizer to Fuel Ratio (unitless)",
+    "r": "Port Radius (in)",
+    "dm_total_dt": "Total mass flow rate (lbm/s)",
+    "cstar": "cstar (in/s)",
+    "T_chmb": "Chamber temperature (K)",
+    "M_chmb": "Chamber molecular weight (g/mol)",
+    "gamma": "gamma (unitless)",
+}
 
-# # Plot thrust vs time for different injector areas
-# plt.figure()
-# for a_inj in a_inj_range:
-#     # Update the injector area in the initial inputs
-#     initialInputs['A_inj'] = ToMetric(a_inj, 'm^2')
-    
-#     # Create a model instance and solve the ODEs
-#     model = Model(initialInputs)
-#     df = model.ODE45()
-    
-#     # Plot the results
-#     plt.plot(df['time'], df['thrust'], label=f"{a_inj:.2E} m^2", linewidth=1)
-#     plt.legend(loc="best")
-#     plt.grid(which='both', linestyle='--', linewidth=0.5)
-#     plt.title("Thrust vs Time for Various Injector Areas")
-#     plt.xlabel("Time (s)")
-#     plt.ylabel("Thrust (lbf)")
+# Format each value in the DataFrame to have 3 decimal places
+dfBe = dfBe.apply(lambda col: col.map(lambda x: format(x, '.3f')))
 
-# # Plot chamber pressure vs time for different injector areas
-# plt.figure()
-# for a_inj in a_inj_range:
-#     initialInputs['A_inj'] = ToMetric(a_inj, 'm^2')
-#     model = Model(initialInputs)
-#     df = model.ODE45()
-#     plt.plot(df['time'], df['Pc'], label=f"{a_inj:.2E} m^2", linewidth=1)
-#     plt.legend(loc="best")
-#     plt.grid(which='both', linestyle='--', linewidth=0.5)
-#     plt.title("Chamber Pressure vs Time for Various Injector Areas")
-#     plt.xlabel("Time (s)")
-#     plt.ylabel("Chamber Pressure (psi)")
+# Rename the columns
+dfBe.rename(columns=column_mapping, inplace=True)
 
-# # Reset the injector area to its original value
-# initialInputs['A_inj'] = ToMetric(9.4e-6, 'm^2')
-
-# # Define a range of throat diameters for analysis
-# d_t_range = np.linspace(0.4, 0.7, 8)
-
-# # Plot thrust vs time for different throat diameters
-# plt.figure()
-# for d_t in d_t_range:
-#     # Update the throat diameter in the initial inputs
-#     initialInputs['d_t'] = ToMetric(d_t, 'in')
-    
-#     # Create a model instance and solve the ODEs
-#     model = Model(initialInputs)
-#     df = model.ODE45()
-    
-#     # Plot the results
-#     plt.plot(df['time'], df['thrust'], label=f"{d_t:.2} in", linewidth=1)
-#     plt.legend(loc="best")
-#     plt.grid(which='both', linestyle='--', linewidth=0.5)
-#     plt.title("Thrust vs Time for Various Throat Diamaters")
-#     plt.xlabel("Time (s)")
-#     plt.ylabel("Thrust (lbf)")
-
-# # Plot chamber pressure vs time for different throat diameters
-# plt.figure()
-# for d_t in d_t_range:
-#     initialInputs['d_t'] = ToMetric(d_t, 'in')
-#     model = Model(initialInputs)
-#     df = model.ODE45()
-#     plt.plot(df['time'], df['Pc'], label=f"{d_t:.2} in", linewidth=1)
-#     plt.legend(loc="best")
-#     plt.grid(which='both', linestyle='--', linewidth=0.5)
-#     plt.title("Chamber Pressure vs Time for Various Throat Diamaters")
-#     plt.xlabel("Time (s)")
-#     plt.ylabel("Chamber Pressure (psi)")
-
-# # Reset the throat diameter to its original value
-# initialInputs['d_t'] = ToMetric(0.5, 'in')
-
-# # Create model instances for different fuel mixtures
-# model1 = Model(initialInputs)
-# # initialInputs['T'] = ToMetric(5583.19, 'K')
-# # initialInputs['M'] = ToMetric(39.992, 'g/mol')
-# # initialInputs['gamma'] = ToMetric(1.1587, 'unitless')
-# # initialInputs['rho_fuel'] = ToMetric(2767.99, 'kg/m^3')
-# initialInputs['T'] = ToMetric(4000, 'K')
-# initialInputs['M'] = ToMetric(30.169, 'g/mol')
-# initialInputs['gamma'] = ToMetric(1.2516, 'unitless')
-# initialInputs['rho_fuel'] = ToMetric(1994, 'kg/m^3')
-# initialInputs['n'] = ToMetric(1.681, 'unitless')
-# initialInputs['a'] = ToMetric(9.33E-8, 'unitless')
-# # initialInputs['A_inj'] = ToMetric(6.4e-6, 'm^2')
-# # initialInputs['d_t'] = ToMetric(0.5, 'in')
-# model2 = Model(initialInputs)
-
-# # Solve the ODEs for each model
-# df1 = model1.ODE45()
-# df2 = model2.ODE45()
-
-# # Plot thrust vs time for different fuel mixtures
-# plt.figure()
-# plt.grid(True)
-# plt.plot(df1['time'], df1['thrust'], linewidth=2, label="0% Aluminum")
-# plt.plot(df2['time'], df2['thrust'], linewidth=2, label="60% Aluminum")
-# plt.title('Thrust vs. Time for Various Fuel Mixtures')
-# plt.xlabel('Time (s)')
-# plt.ylabel('Thrust (lbf)')
-
-# # Plot chamber pressure vs time for different fuel mixtures
-# plt.figure()
-# plt.plot(df1['time'], df1['Pc'], linewidth=2, label="0% Aluminum")
-# plt.plot(df2['time'], df2['Pc'], linewidth=2, label="60% Aluminum")
-# plt.grid(which='both', linestyle='--', linewidth=0.5)
-# plt.legend(loc="best")
-# plt.title("Chamber Pressures Over Time for Various Fuel Mixtures")
-# plt.xlabel("Time (s)")
-# plt.ylabel("Pressure (psi)")
-
-# # Plot tank pressure vs time for different fuel mixtures
-# plt.figure()
-# plt.plot(df1['time'], df1['Pox'], linewidth=2, label="0% Aluminum")
-# plt.plot(df2['time'], df2['Pox'], linewidth=2, label="100% Aluminum")
-# plt.grid(which='both', linestyle='--', linewidth=0.5)
-# plt.legend(loc="best")
-# plt.title("Tank Pressures Over Time for Various Fuel Mixtures")
-# plt.xlabel("Time (s)")
-# plt.ylabel("Pressure (psi)")
-
-# # Display all the plots
-# plt.show()
+# Save the DataFrame to a CSV file
+dfBe.to_csv("src/Model/CSV/current_data.csv", index=False)

@@ -6,8 +6,8 @@ from sklearn.linear_model import LinearRegression
 
 # Read the CSV file
 df = pd.read_csv('src/GDL/results.csv')
-
 def FuelProperties(OF, Pc):
+
     # Calculate the Euclidean distance between the given OF, Pc and all rows in the DataFrame
     distances = np.sqrt((df['OF'] - OF)**2 + (df['Pc'] - Pc)**2)
     
@@ -20,6 +20,8 @@ def FuelProperties(OF, Pc):
     M_pred = df.loc[idx, 'M']
     
     return T_pred, k_pred, M_pred
+
+print(FuelProperties(100, 0))
 
 # Plotting
 fig = plt.figure(figsize=(18, 6))

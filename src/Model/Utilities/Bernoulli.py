@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from .ChemicalProperties import ChemicalProperties
 
 class BernoulliModel(ChemicalProperties):
+    """
     ##### ##### ##### ##### ##### ##### ##### ##### #####
     ## This class outlines the entire Blowdown Model   ##
     #   Governing Equations                             #
@@ -13,11 +14,14 @@ class BernoulliModel(ChemicalProperties):
     #       - Conversation of Mass                      #
     #       - Bernoulli's Compressible Flow             #
     ##### ##### ##### ##### ##### ##### ##### ##### #####
+    """
     def __init__(self, inputs):
+        """
         # Purpose:  Initiates the class
         # Inputs:   inputs - The input dictionary from main.py
         #
         # Outputs:  self - Input Constants necessary to perform the calculations for Blowdown Model
+        """
 
         self.A_inj = inputs["A_inj"]                                # Area of the Injector
         self.C_d = inputs["C_d"]                                    # Coefficient of Discharge of Injector
@@ -28,15 +32,17 @@ class BernoulliModel(ChemicalProperties):
 
         super().__init__(T_tank=self.T_tank, V_tank=self.V_tank, P_tank=self.Po_i, m_N2O=self.m_N2O)
 
-        self.V_u_i = inputs["V_tank"] * self.ullageFraction()       # Volume of the Ullage
+        self.V_u_i = inputs["V_tank"] * self.ullageFraction         # Volume of the Ullage
         self.rho_ox = self.densityN2OLiquid(self.T_tank)            # Density of the Liquid Oxidizer
 
     def oxidizerMassDeriv(self, Po, P_c):
+        """
         # Purpose:  Calculate the oxidizer mass flow
         # Inputs:   Po     - Current Oxidizer Tank Pressure
         #           P_c    - Current Combustion Chamber Pressure
         #
         # Outputs:  dmo_dt - Change in Massflow rate of liquid oxidizer with Time
+        """
 
         # Take necessary constant values from init dunder function
         A_inj = self.A_inj
@@ -48,10 +54,12 @@ class BernoulliModel(ChemicalProperties):
         return dmo_dt
 
     def volDeriv(self, dmo_dt):
+        """
         # Purpose:  Calculate the volume of the ullage in the oxidizer tank
         # Inputs:   dmo_dt - Change in Massflow rate of liquid oxidizer with Time
         #
         # Outputs:  dVu_dt - Change in ullage volume rate with Time
+        """
 
         # Take necessary constant values from init dunder function
         rho_ox = self.rho_ox
@@ -62,11 +70,13 @@ class BernoulliModel(ChemicalProperties):
         return dVu_dt
 
     def pressureDeriv(self, Vu, dVu_dt):
+        """
         # Purpose:  Calculate the change in the Oxidizer Tank Pressure
         # Inputs:   Vu     - Current volume of the ullage
         #           dVu_dt - Change in ullage Volume rate with Time
         #
         # Outputs:  dPo_dt - Change in oxidizer tank Pressure with Time
+        """
 
         # Take necessary constant values from init dunder function
         Po_i = self.Po_i
@@ -78,6 +88,7 @@ class BernoulliModel(ChemicalProperties):
         return dPo_dt
     
     def blowdownModel(self, Po, Pc, Vu):
+        """
         # Final Wrapper that holds all of the parts of the blowdown model
         # Inputs:   Po    - Current Oxidizer Tank Pressure
         #           Pc    - Current Combustion Chamber Pressure
@@ -86,6 +97,7 @@ class BernoulliModel(ChemicalProperties):
         # Outputs: dmo_dt - Change in Mass Flow Rate of Oxidizer with Time
         #          dPo_dt - Change in Oxidizer Tank Pressure with Time
         #          dVu_dt - Change in Ullage Gas Volume with Time
+        """
 
         dmo_dt = self.oxidizerMassDeriv(Po, Pc)
         dVu_dt = self.volDeriv(dmo_dt)

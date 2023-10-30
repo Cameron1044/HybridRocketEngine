@@ -47,6 +47,7 @@ class ChemicalProperties():
         self.E5 = 0
 
         self.n_go, self.n_lo, self.n_Ar = self.initialMoles()
+        self.ullageFraction = self.ullageFractionFunc()
 
     def molarVolumeN2O(self, T):
         Vhat_li = self.Q2**(1 + (1 - T / self.Q3)**self.Q4) / self.Q1  # molar volume of liquid N2O [m**3/kmol]
@@ -90,7 +91,7 @@ class ChemicalProperties():
         P = (n_Ar + n_go)*self.R*T_tank / (V_tank - n_lo*Vhat_l)
         return P
     
-    def ullageFraction(self):
+    def ullageFractionFunc(self):
         Vhat_li = self.molarVolumeN2O(self.T_tank)
         V_li = self.n_lo*Vhat_li
         ullageFraction = 1 - (V_li / self.V_tank)

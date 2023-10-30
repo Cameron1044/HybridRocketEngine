@@ -1,248 +1,299 @@
-# Import necessary libraries
 import numpy as np
 import math as m
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# Import custom modules
 from .Bernoulli import BernoulliModel
 from .ZK import ZKmodel
 from .Combustion import CombustionModel
 from .utilities import ToEnglish, ToMetric
 
 class Model():
-    ##### ##### ##### ##### ##### ##### ##### ##### #####
-    ## This class outlines the entire Rocket Model     ##
-    ##### ##### ##### ##### ##### ##### ##### ##### #####
+    """
+    Model class provides the core functionality for simulating the performance of the rocket,
+    considering various factors such as combustion, blowdown, pressure differences, and more.
+    """
 
     def __init__(self, initialInputs, ZK=True, iterations=1000, tspan=[0, 20]):
-        # Purpose:  Initiates the class
-        # Inputs:   initialInputs - The input dictionary from main.py
-        #           iterations    - Number of data points across the time span
-        #           tspan         - Array containing the start and finish time for interation
-        #
-        # Outputs:  self          - Input Constants necessary to perform the Calculations
+        """
+        Initialize the Model class.
 
-        # Comes from Main.py input dictionary and command call
-        self.initialInputs = initialInputs 
-        self.iterations = iterations
-        self.tspan = tspan
+        Parameters:
+        - initialInputs (dict): Input parameters provided by the user or main application.
+        - ZK (bool): Flag to select between the ZK model or Bernoulli model for blowdown.
+        - iterations (int): Number of data points across the specified time span.
+        - tspan (list): Start and finish time for iterations.
 
-        # n_go, n_lo = initialMoles(initialInputs["T_tank"], initialInputs["mass_loaded"], initialInputs["V_tank"])
+        Returns:
+        None.
+        """
+        self.initialInputs = initialInputs  # Initial Input Dictionary
+        self.iterations = iterations        # Number of Iterations
+        self.tspan = tspan                  # Time Span
+        self.ZK = ZK                        # Flag for ZK Model
+        self.initialValues()                # Calculate Initial Values
 
-        # Initialize sub-models for blowdown and combustion
-        self.ZK = ZK
-        if ZK:
-            self.blowdown = ZKmodel(initialInputs)
+    def initialValues(self):
+        """
+        Calculate and set initial conditions based on provided inputs.
+
+        Parameters:
+        None.
+
+        Returns:
+        None.
+        """
+        # Initialize combustion model using initial inputs
+        self.combustion = CombustionModel(self.initialInputs)
+
+        # Compute initial mass of fuel grain based on given geometric properties
+        fuel_area = np.pi * (self.initialInputs['OD_fuel']**2 - self.initialInputs['ID_fuel']**2) / 4
+        mf_i = self.initialInputs['rho_fuel'] * self.initialInputs['L_fuel'] * fuel_area
+
+        if self.ZK:
+            # Using the ZK model for blowdown
+            self.blowdown = ZKmodel(self.initialInputs)
+
+            # Set initial conditions
+            Ti = self.blowdown.T_tank                       # Initial Temperature of the Oxidizer Tank [K]
+            ng_i = self.blowdown.n_go                       # Initial Number of Gas Molecules [kmol]
+            nl_i = self.blowdown.n_lo                       # Initial Number of Liquid Molecules [kmol]
+            Pc_i = self.initialInputs["P_amb"]              # Initial Pressure of the Combustion Chamber [Pa]
+            r_i = self.initialInputs['ID_fuel'] / 2         # Initial Radius of the Fuel Grain Port [m]
+            self.mt_i = nl_i * self.blowdown.MW_N2O + mf_i          # Initial Total Mass of the Fuel + Oxidizer [kg]
+            self.y0 = [Ti, ng_i, nl_i, mf_i, Pc_i, r_i, 0]  # Initial Conditions for the ODE45 Solver
+
         else:
-            self.blowdown = BernoulliModel(initialInputs)
-        self.combustion = CombustionModel(initialInputs)
+            # Using the Bernoulli model for blowdown
+            self.blowdown = BernoulliModel(self.initialInputs)
+            
+            # For calculations of initial mass of liquid oxidizer
+            liquidOxidizerFraction = (1 - self.blowdown.ullageFraction)
+            densityN2OLiquid = self.blowdown.densityN2OLiquid(self.initialInputs["T_tank"])
 
 
-        
-        #### Calculate initial conditions based on provided inputs ####
-        # Mass of Liquid Nitrous Oxide
-        if ZK:
-            Ti = initialInputs["T_tank"]
-            ng_i = self.blowdown.n_go
-            nl_i = self.blowdown.n_lo
-            mf_i = initialInputs['rho_fuel'] * np.pi * initialInputs['L_fuel'] * (initialInputs['OD_fuel']**2 - initialInputs['ID_fuel']**2) / 4
-            Pc_i = initialInputs["P_amb"]
-            r_i = initialInputs['ID_fuel']/2
-            self.mt_i = initialInputs["m_N2O"] + mf_i
-            self.y0 = [Ti, ng_i, nl_i, mf_i, Pc_i, r_i, 0]
-        else:    
-            mo_i = initialInputs["V_tank"] * (1 - self.blowdown.ullageFraction()) * self.blowdown.densityN2OLiquid(initialInputs["T_tank"])
-            # Mass of Fuel Grain
-            mf_i = initialInputs['rho_fuel'] * np.pi * initialInputs['L_fuel'] * (initialInputs['OD_fuel']**2 - initialInputs['ID_fuel']**2) / 4
-            # Initial Oxidizer Tank Pressure
-            Po_i = initialInputs["P_tank"]
-            # Inital Chamber Pressure
-            Pc_i = initialInputs["P_amb"]
-            # Initial Volume of the Oxidizer Tank Ullage Gas
-            Vu_i = initialInputs["V_tank"] * self.blowdown.ullageFraction()
-            # Initial Port Radius of the Fuel Grain
-            r_i = initialInputs['ID_fuel']/2
-            self.mt_i = mo_i + mf_i
-
-            ## Loading into ODE45 initial variable array
-            self.y0 = [mo_i, mf_i, Po_i, Pc_i, Vu_i, r_i, 0]
-
-    # def initialValues(self):
-    #     n_go, n_lo, n_Ar = initialMoles(self.initialInputs["T_tank"], self.initialInputs["mass_loaded"], self.initialInputs["V_tank"], self.initialInputs["P_tank"])
+            # Set other initial conditions
+            mo_i = self.blowdown.V_tank * liquidOxidizerFraction * densityN2OLiquid # Initial Mass of Liquid Oxidizer [kg]
+            Po_i = self.blowdown.P_tank                                             # Initial Pressure of the Oxidizer Tank [Pa]
+            Pc_i = self.initialInputs["P_amb"]                                      # Initial Pressure of the Combustion Chamber [Pa]
+            Vu_i = self.blowdown.V_tank * self.blowdown.ullageFraction              # Initial Volume of the Ullage [m^3]
+            r_i = self.initialInputs['ID_fuel'] / 2                                 # Initial Radius of the Fuel Grain Port [m]
+            self.mt_i = mo_i + mf_i                                                 # Initial Total Mass of the Fuel + Oxidizer [kg]
+            self.y0 = [mo_i, mf_i, Po_i, Pc_i, Vu_i, r_i, 0]                        # Initial Conditions for the ODE45 Solver
 
 
+    def termination_event_radius(self, t, y):
+        """
+        Termination event to stop the integration when port radius exceeds half of the fuel outer diameter.
 
-    #     mo_i = self.initialInputs["V_tank"] * (1 - self.initialInputs["ullage_fraction"]) * initialInputs['rho_ox']
-    #     # Mass of Fuel Grain
-    #     mf_i = initialInputs['rho_fuel'] * np.pi * initialInputs['L_fuel'] * (initialInputs['OD_fuel']**2 - initialInputs['ID_fuel']**2) / 4
-    #     # Initial Oxidizer Tank Pressure
-    #     Po_i = initialInputs["P_tank"]
-    #     # Inital Chamber Pressure
-    #     Pc_i = initialInputs["P_amb"]
-    #     # Initial Volume of the Oxidizer Tank Ullage Gas
-    #     Vu_i = initialInputs["V_tank"] * initialInputs["ullage_fraction"]
-    #     # Initial Port Radius of the Fuel Grain
-    #     r_i = initialInputs['ID_fuel']/2
-    #     self.mt_i = mo_i + mf_i
+        Parameters:
+        - t (float): Time.
+        - y (list): Current state values.
 
-    #     ## Loading into ODE45 initial variable array
-    #     self.y0 = [mo_i, mf_i, Po_i, Pc_i, Vu_i, r_i, 0]
-
-
-
-    #### TERMINATION EVENTS ####
-    ## Purpose: Events which stop the integration and iteration if they become true
-
-    # Event to check if port radius exceeds half of the fuel outer diameter
-    def event1(self, t, y):
+        Returns:
+        float: Difference between current radius and half of the fuel outer diameter.
+        """
         r = y[5]
-        fuel_OD = self.initialInputs['OD_fuel']
-        return r - fuel_OD/2
+        fuel_OR = self.initialInputs['OD_fuel'] / 2
+        return r - fuel_OR
 
-    # Event to check if oxidizer mass reaches zero
-    def event2(self, t, y):
-        m_o = y[0]
-        return m_o
-    
-    def event2ZK(self, t, y):
-        m_o = y[2]
+    termination_event_radius.terminal = True
+
+    def termination_event_oxidizer_mass(self, t, y):
+        """
+        Termination event to stop the integration when oxidizer mass reaches zero.
+
+        Parameters:
+        - t (float): Time.
+        - y (list): Current state values.
+
+        Returns:
+        float: Current oxidizer mass.
+        """
+        m_o = y[2] if self.ZK else y[0]
         return m_o
 
-    # Event to check if chamber pressure exceeds oxidizer tank pressure
-    def event3(self, t, y):
-        P_c = y[3]
-        P_o = y[2]
-        return P_c - P_o
-    
-    def event3ZK(self, t, y):
-        To = y[0]
-        ng = y[1]
-        nl = y[2]
-        P_c = y[3]
-        _, _, _, P_o = self.blowdown.ZKModel(To, ng, nl, P_c)
-        return P_c - P_o
-    
-    def modelZK(self, To, ng, nl, mf, Pc, r, I):
-        # Purpose:  Initiates the Model which wraps around the different Hybrid rocket Models
-        MW_N2O = 44.013 # molecular weight of N2O
-        # Calls the Blowdown Model
+    termination_event_oxidizer_mass.terminal = True
+
+    def termination_event_pressure_difference(self, t, y):
+        """
+        Termination event to stop the integration when chamber pressure exceeds oxidizer tank pressure.
+
+        Parameters:
+        - t (float): Time.
+        - y (list): Current state values.
+
+        Returns:
+        float: Difference between chamber pressure and oxidizer tank pressure.
+        """
+        if self.ZK:
+            To, ng, nl, Pc = y[0], y[1], y[2], y[4]
+            _, _, _, P_o = self.blowdown.ZKModel(To, ng, nl, Pc)
+        else:
+            Pc, P_o = y[3], y[2]
+        return Pc - P_o
+
+    termination_event_pressure_difference.terminal = True
+
+    def model_zk(self, To, ng, nl, mf, Pc, r, I):
+        """
+        Initiates the ZK Model which wraps around the different Hybrid rocket Models.
+
+        Parameters:
+        - To (float): Temperature.
+        - ng (float): Number of gas molecules.
+        - nl (float): Number of liquid molecules.
+        - mf (float): Mass of fuel.
+        - Pc (float): Chamber pressure.
+        - r (float): Radius.
+        - I (float): Impulse.
+
+        Returns:
+        tuple: Differentiated values of temperature, gas molecules, liquid molecules, fuel mass, pressure, radius, and thrust.
+        """
         dTo, dng_dt, dnl_dt, Po = self.blowdown.ZKModel(To, ng, nl, Pc)
-        dmo_dt = (dnl_dt+dng_dt)*MW_N2O
-
-        # Calls the Combustion Chamber Model
-        dr_dt, dmf_dt, dPc_dt, T = self.combustion.combustionModel(dmo_dt, Pc, r)
-
-        return dTo, dng_dt, dnl_dt, dmf_dt, dPc_dt, dr_dt, T, Po
+        dmo_dt = dnl_dt * self.blowdown.MW_N2O
+        dr_dt, dmf_dt, dPc_dt, T, OF, T_chmb, M_chmb, gamma = self.combustion.combustionModel(dmo_dt, Pc, r)
+        return dTo, dng_dt, dnl_dt, dmf_dt, dPc_dt, dr_dt, T, Po, OF, T_chmb, M_chmb, gamma
 
     def model(self, mo, mf, Po, Pc, Vu, r, I):
-        # Purpose:  Initiates the Model which wraps around the different Hybrid rocket Models
-        
-        # Calls the Blowdown Model
+        """
+        Initiates the Bernoulli Model which wraps around the different Hybrid rocket Models.
+
+        Parameters:
+        - mo (float): Mass of oxidizer.
+        - mf (float): Mass of fuel.
+        - Po (float): Oxidizer pressure.
+        - Pc (float): Chamber pressure.
+        - Vu (float): Ullage volume.
+        - r (float): Radius.
+        - I (float): Impulse.
+
+        Returns:
+        tuple: Differentiated values for oxidizer mass, fuel mass, oxidizer pressure, chamber pressure, ullage volume, radius, and thrust.
+        """
         dmo_dt, dPo_dt, dVu_dt = self.blowdown.blowdownModel(Po, Pc, Vu)
+        dr_dt, dmf_dt, dPc_dt, T, OF, T_chmb, M_chmb, gamma = self.combustion.combustionModel(dmo_dt, Pc, r)
+        return dmo_dt, dmf_dt, dPo_dt, dPc_dt, dVu_dt, dr_dt, T, OF, T_chmb, M_chmb, gamma
 
-        # Calls the Combustion Chamber Model
-        dr_dt, dmf_dt, dPc_dt, T = self.combustion.combustionModel(dmo_dt, Pc, r)
+    def ode_function(self, t, y):
+        """
+        ODE function for the Bernoulli model.
 
-        return dmo_dt, dmf_dt, dPo_dt, dPc_dt, dVu_dt, dr_dt, T
+        Parameters:
+        - t (float): Time.
+        - y (list): Current state values.
 
-    # Wrapper function for the ODE solver
-    def ODEfun(self, t, y):
+        Returns:
+        list: List of differentiated values.
+        """
         mo, mf, Po, Pc, Vu, r, I = y
-        dmo_dt, dmf_dt, dPo_dt, dPc_dt, dVu_dt, dr_dt, T = self.model(mo, mf, Po, Pc, Vu, r, I)
-        return [dmo_dt, dmf_dt, dPo_dt, dPc_dt, dVu_dt, dr_dt, T]
-    
-    def ODEfunZK(self, t, y):
-        To, ng, nl, mf, Pc, r, I = y
-        dTo, dng_dt, dnl_dt, dmf_dt, dPc_dt, dr_dt, T, _ = self.modelZK(To, ng, nl, mf, Pc, r, I)
-        return [dTo, dng_dt, dnl_dt, dmf_dt, dPc_dt, dr_dt, T]
+        return list(self.model(mo, mf, Po, Pc, Vu, r, I)[:-4])
 
-    ## Function to solve the ODEs and return results in a dataframe
-    # This is where the CSV files will be made and how 
+    def ode_function_zk(self, t, y):
+        """
+        ODE function for the ZK model.
+
+        Parameters:
+        - t (float): Time.
+        - y (list): Current state values.
+
+        Returns:
+        list: List of differentiated values.
+        """
+        To, ng, nl, mf, Pc, r, I = y
+        return list(self.model_zk(To, ng, nl, mf, Pc, r, I)[:-5])
+
     def ODE45(self):
-        # Define columns for the results dataframe
+        """
+        Solve the ODEs using scipy's `solve_ivp` and return results in a dataframe.
+
+        Parameters:
+        None.
+
+        Returns:
+        pd.DataFrame: Results containing information about thrust, impulse, pressures, and more.
+        """
+        # Define data columns and initialize the dataframe
         data_columns = [
-            "time",
-            "thrust",
-            "impulse",
-            "Pc",
-            "Pox",
-            "dmox",
-            "dmf",
-            "OF",
-            "r",
-            "dm_total_dt",
-            "cstar",
+            "time", "thrust", "impulse", "Pc", "Pox", "mox", "mf",
+            "dmox", "dmf", "OF", "r", "dm_total_dt", "cstar", "T_chmb", "M_chmb", "gamma"
+        ]
+        self.df = pd.DataFrame(columns=data_columns)
+
+        # Determine the model function based on ZK flag
+        ode_func = self.ode_function_zk if self.ZK else self.ode_function
+
+        # List of events to monitor during the ODE solving process
+        events = [
+            self.termination_event_radius,
+            self.termination_event_oxidizer_mass,
+            self.termination_event_pressure_difference,
         ]
 
-        # Initialize dataframe
-        self.df = pd.DataFrame(columns=data_columns)
-        
-        # Solve the ODEs
-        if self.ZK:
-            sol = solve_ivp(self.ODEfunZK, self.tspan, self.y0, t_eval=np.linspace(self.tspan[0], self.tspan[1], self.iterations), events=[self.event1, self.event2ZK, self.event3ZK])
-            t = sol.t
-            To = sol.y[0]
-            ng = sol.y[1]
-            nl = sol.y[2]
-            mf = sol.y[3]
-            Pc = sol.y[4]
-            r = sol.y[5]
-            I = sol.y[6]
+        # Solve the ODEs using the specified function and initial conditions
+        sol = solve_ivp(
+            ode_func, self.tspan, self.y0,
+            t_eval=np.linspace(self.tspan[0], self.tspan[1], self.iterations),
+            events=events
+        )
 
-            for i, ti in enumerate(sol.t):
-                dTo, dng_dt, dnl_dt, dmf_dt, dPc_dt, dr_dt, T, Po = self.modelZK(To[i], ng[i], nl[i], mf[i], Pc[i], r[i], I[i])
-                dmo_dt = -dnl_dt*44.013
+        # Print termination event messages
+        name = 'ZK:' if self.ZK else 'Bernoulli:'
+        if sol.t_events[0].size > 0:
+            print(f"{name} Integration terminated because port radius exceeded half of the fuel outer diameter.")
+        elif sol.t_events[1].size > 0:
+            print(f"{name} Integration terminated because oxidizer mass reached zero.")
+        elif sol.t_events[2].size > 0:
+            print(f"{name} Integration terminated because chamber pressure exceeded oxidizer tank pressure.")
+
+        # Process solution and populate the dataframe
+        for i, ti in enumerate(sol.t):
+            if self.ZK:
+                dTo, dng_dt, dnl_dt, dmf_dt, dPc_dt, dr_dt, T, Po, OF, T_chmb, M_chmb, gamma = self.model_zk(*sol.y[:, i])
+                dmo_dt = -dnl_dt * self.blowdown.MW_N2O
                 dmf_dt = -dmf_dt
-                new_data = {
-                    "time": t[i],
-                    "thrust": ToEnglish(T, 'N'),
-                    "impulse": ToEnglish(I[i], 'N'),
-                    "Pc": ToEnglish(Pc[i], 'Pa'),
-                    "Pox": ToEnglish(Po, 'Pa'),
-                    "dmox": ToEnglish(dmo_dt, 'kg'),
-                    "dmf": ToEnglish(dmf_dt, 'kg'),
-                    "OF": ToEnglish(dmo_dt/dmf_dt, 'unitless'),
-                    "r": ToEnglish(r[i], 'm'),
-                    "dm_total_dt": ToEnglish(dmo_dt+dmf_dt, 'kg'),
-                    "cstar": ToEnglish(T, 'N')/ToEnglish(dmo_dt+dmf_dt, 'kg')
-                }
-                self.df.loc[len(self.df)] = new_data
+                impulse = sol.y[6, i]
+                Pc = sol.y[4, i]
+                mox = sol.y[2, i] * self.blowdown.MW_N2O
+                mf = sol.y[3, i]
+                r = sol.y[5, i]
+            else:
+                dmo_dt, dmf_dt, dPo_dt, dPc_dt, dVu_dt, dr_dt, T, OF, T_chmb, M_chmb, gamma = self.model(*sol.y[:, i])
+                dmo_dt = -dmo_dt
+                dmf_dt = -dmf_dt
+                impulse = sol.y[6, i]
+                Po = sol.y[2, i]
+                Pc = sol.y[3, i]
+                mox = sol.y[0, i]
+                mf = sol.y[1, i]
+                r = sol.y[5, i]
 
-        else:
-            sol = solve_ivp(self.ODEfun, self.tspan, self.y0, t_eval=np.linspace(self.tspan[0], self.tspan[1], self.iterations), events=[self.event1, self.event2, self.event3])
-            t = sol.t
-            mo = sol.y[0]
-            mf = sol.y[1]
-            Po = sol.y[2]
-            Pc = sol.y[3]
-            Vu = sol.y[4]
-            r = sol.y[5]
-            I = sol.y[6]
 
-            for i, ti in enumerate(sol.t):
-                dmo_dt, dmf_dt, dPo_dt, dPc_dt, dVu_dt, dr_dt, T = self.model(mo[i], mf[i], Po[i], Pc[i], Vu[i], r[i], I[i])
-                new_data = {
-                    "time": t[i],
-                    "thrust": ToEnglish(T, 'N'),
-                    "impulse": ToEnglish(I[i], 'N'),
-                    "Pc": ToEnglish(Pc[i], 'Pa'),
-                    "Pox": ToEnglish(Po[i], 'Pa'),
-                    "dmox": ToEnglish(-dmo_dt, 'kg'),
-                    "dmf": ToEnglish(-dmf_dt, 'kg'),
-                    "OF": ToEnglish(dmo_dt/dmf_dt, 'unitless'),
-                    "r": ToEnglish(r[i], 'm'),
-                    "dm_total_dt": ToEnglish(-(dmo_dt+dmf_dt), 'kg'),
-                    "cstar": ToEnglish(T, 'N')/ToEnglish(-(dmo_dt+dmf_dt), 'kg')
-                }
-                self.df.loc[len(self.df)] = new_data
+            # Compile new data for the dataframe
+            new_data = {
+                "time": ti,
+                "thrust": ToEnglish(T, 'N'),
+                "impulse": ToEnglish(impulse, 'N'),
+                "Pc": ToEnglish(Pc, 'Pa'),
+                "Pox": ToEnglish(Po, 'Pa'),
+                "mox": ToEnglish(mox, 'kg'),
+                "mf": ToEnglish(mf, 'kg'),
+                "dmox": ToEnglish(abs(dmo_dt), 'kg'),
+                "dmf": ToEnglish(abs(dmf_dt), 'kg'),
+                "OF": ToEnglish(OF, 'unitless'),
+                "r": ToEnglish(r, 'm'),
+                "dm_total_dt": ToEnglish(abs(dmo_dt + dmf_dt), 'kg'),
+                "cstar": ToEnglish(T, 'N') / ToEnglish(abs(dmo_dt + dmf_dt), 'kg'),
+                "T_chmb": T_chmb,
+                "M_chmb": M_chmb,
+                "gamma": gamma,
+            }
+            
+            # Append the new data to the dataframe
+            self.df.loc[len(self.df)] = new_data
 
         return self.df
 
-# Set the terminal attribute for the events
-Model.event1.terminal = True
-Model.event2.terminal = True
-Model.event3.terminal = True
-Model.event2ZK.terminal = True
-Model.event3ZK.terminal = True
+

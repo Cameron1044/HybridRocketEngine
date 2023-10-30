@@ -144,3 +144,33 @@ def ToEnglish(value, conversion):
         "unitless": 1,
     }
     return value * conversionDict[conversion]
+
+def plot_graph(title, xlabel, ylabel, *lines):
+    """
+    Generalized plotting function.
+    lines: A list of dictionaries containing y data and labels for each line.
+    """
+    plt.figure()
+    
+    for line in lines:
+        y = line['y']
+        x = line.get('x', None) # Optional x data
+        label = line.get('label', None)
+        linestyle = line.get('linestyle', '-')
+        color = line.get('color', None)
+        if label:
+            if x is None:
+                plt.axhline(y=y, linewidth=2, label=label, linestyle=linestyle, color=color)
+            else:
+                plt.plot(x, y, linewidth=2, label=label, linestyle=linestyle, color=color)
+        else:
+            if x is None:
+                plt.axhline(y=y, linewidth=2, label=label, linestyle=linestyle, color=color)
+            else:
+                plt.plot(x, y, linewidth=2, linestyle=linestyle, color=color)
+            
+    plt.grid(which='both', linestyle='--', linewidth=0.5)
+    plt.legend(loc="best")
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
