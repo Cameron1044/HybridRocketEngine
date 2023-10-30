@@ -84,7 +84,6 @@ def odefun(t, y):
     dT, dn_g, dn_l, _, _ = tank_system(t, To, n_go, n_lo)
     return [dT, dn_g, dn_l]
 
-
 def tank_system(t, To, n_go, n_lo):
     Pe = -2924.42 * t**6 + 46778.07 * t**5 - 285170.63 * t**4 + 813545.02 * t**3 - 1050701.53 * t**2 + 400465.85 * t + 1175466.2  # Test 1
     # Pe = 101325
