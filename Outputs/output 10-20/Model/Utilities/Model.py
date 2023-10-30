@@ -8,14 +8,14 @@ import pandas as pd
 # Import custom modules
 from .Blowdown import BlowdownModel
 from .Combustion import CombustionModel
-from .utilities import ToEnglish
+from .utilities import ToEnglish, ToMetric
 
 class Model():
     ##### ##### ##### ##### ##### ##### ##### ##### #####
     ## This class outlines the entire Rocket Model     ##
     ##### ##### ##### ##### ##### ##### ##### ##### #####
 
-    def __init__(self, initialInputs, iterations=500, tspan=[0, 10]):
+    def __init__(self, initialInputs, iterations=1000, tspan=[0, 20]):
         # Purpose:  Initiates the class
         # Inputs:   initialInputs - The input dictionary from main.py
         #           iterations    - Number of data points across the time span
@@ -32,7 +32,7 @@ class Model():
         # Mass of Liquid Nitrous Oxide
         mo_i = initialInputs["V_tank"] * (1 - initialInputs["ullage_fraction"]) * initialInputs['rho_ox']
         # Mass of Fuel Grain
-        mf_i = initialInputs['rho_fuel'] * np.pi * (initialInputs['ID_fuel']**2 - initialInputs['ID_fuel']**2) / 4
+        mf_i = initialInputs['rho_fuel'] * np.pi * initialInputs['L_fuel'] * (initialInputs['OD_fuel']**2 - initialInputs['ID_fuel']**2) / 4
         # Initial Oxidizer Tank Pressure
         Po_i = initialInputs["P_tank"]
         # Inital Chamber Pressure
@@ -41,6 +41,7 @@ class Model():
         Vu_i = initialInputs["V_tank"] * initialInputs["ullage_fraction"]
         # Initial Port Radius of the Fuel Grain
         r_i = initialInputs['ID_fuel']/2
+        self.mt_i = mo_i + mf_i
 
         ## Loading into ODE45 initial variable array
         self.y0 = [mo_i, mf_i, Po_i, Pc_i, Vu_i, r_i, 0]
@@ -100,7 +101,8 @@ class Model():
             "dmf",
             "OF",
             "r",
-            "dm_total_dt"
+            "dm_total_dt",
+            "cstar",
         ]
 
         # Initialize dataframe
@@ -132,7 +134,8 @@ class Model():
                 "dmf": ToEnglish(-dmf_dt, 'kg'),
                 "OF": ToEnglish(dmo_dt/dmf_dt, 'unitless'),
                 "r": ToEnglish(r[i], 'm'),
-                'dm_total_dt': ToEnglish(-(dmo_dt+dmf_dt), 'kg')
+                "dm_total_dt": ToEnglish(-(dmo_dt+dmf_dt), 'kg'),
+                "cstar": ToEnglish(T, 'N')/ToEnglish(-(dmo_dt+dmf_dt), 'kg')
             }
             self.df.loc[len(self.df)] = new_data
 

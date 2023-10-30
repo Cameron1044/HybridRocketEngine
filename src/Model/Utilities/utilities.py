@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 def ToMetric(value, conversion, n=1):
     ## To take in a value and the current unit it is in to change it into metric

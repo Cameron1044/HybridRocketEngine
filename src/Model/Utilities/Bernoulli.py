@@ -3,7 +3,9 @@ import math as m
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
-class BlowdownModel():
+from .ChemicalProperties import ChemicalProperties
+
+class BernoulliModel(ChemicalProperties):
     ##### ##### ##### ##### ##### ##### ##### ##### #####
     ## This class outlines the entire Blowdown Model   ##
     #   Governing Equations                             #
@@ -19,9 +21,15 @@ class BlowdownModel():
 
         self.A_inj = inputs["A_inj"]                                # Area of the Injector
         self.C_d = inputs["C_d"]                                    # Coefficient of Discharge of Injector
-        self.rho_ox = inputs["rho_ox"]                              # Density of Liquid Oxidizer
         self.Po_i = inputs["P_tank"]                                # Pressure of the Oxidizer Tank
-        self.V_u_i = inputs["V_tank"] * inputs["ullage_fraction"]   # Volume of the Ullage
+        self.T_tank = inputs["T_tank"]                              # Temperature of the Oxidizer Tank
+        self.m_N2O = inputs["m_N2O"]                                # Mass of Liquid Nitrous Oxide
+        self.V_tank = inputs["V_tank"]                              # Volume of the Oxidizer Tank
+
+        super().__init__(T_tank=self.T_tank, V_tank=self.V_tank, P_tank=self.Po_i, m_N2O=self.m_N2O)
+
+        self.V_u_i = inputs["V_tank"] * self.ullageFraction()       # Volume of the Ullage
+        self.rho_ox = self.densityN2OLiquid(self.T_tank)            # Density of the Liquid Oxidizer
 
     def oxidizerMassDeriv(self, Po, P_c):
         # Purpose:  Calculate the oxidizer mass flow

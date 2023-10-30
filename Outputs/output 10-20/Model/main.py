@@ -6,7 +6,7 @@ import pandas as pd
 import pprint
 
 from Utilities.Model import Model
-from Utilities.utilities import ToMetric
+from Utilities.utilities import ToMetric, ToEnglish
 
 initialInputs = {
     # Purpose:  Dictionary of Initial Inputs, organized by section
@@ -14,10 +14,10 @@ initialInputs = {
     #### Oxidizer Tank
     "V_tank": ToMetric(3, 'L'),
     "P_tank": ToMetric(3000, 'psi'),
-    "ullage_fraction": ToMetric(0.20, 'unitless'),
+    "ullage_fraction": ToMetric(0.2, 'unitless'),
     "rho_ox": ToMetric(1226, 'kg/m^3'),
     #### Injector
-    "A_inj": ToMetric(6.4E-6, 'm^2'),
+    "A_inj": ToMetric(9.4e-6, 'm^2'),
     "C_d": ToMetric(0.4, 'unitless'),
     #### Fuel Properties
     "rho_fuel": ToMetric(919, 'kg/m^3'),
@@ -25,20 +25,32 @@ initialInputs = {
     "n": ToMetric(0.681, 'unitless'),
     "a": ToMetric(2.85E-5, 'unitless'),
     ## Combustion Fuel Properties
-    "gamma": ToMetric(1.2705, 'unitless'),
-    "M": ToMetric(23.147, 'g/mol'),
-    "T": ToMetric(3015, 'K'),
+    # "gamma": ToMetric(1.2705, 'unitless'),
+    # "M": ToMetric(23.147, 'g/mol'),
+    # "T": ToMetric(3015, 'K'),
+    "gamma": ToMetric(1.2448, 'unitless'),
+    "M": ToMetric(27.442, 'g/mol'),
+    "T": ToMetric(3474, 'K'),
     #### Fuel Grain
-    "L_fuel": ToMetric(12, 'in'),
-    "OD_fuel": ToMetric(1.688, 'in'),
-    "ID_fuel": ToMetric(1.35, 'in'),
+    "L_fuel": ToMetric(6, 'in'),
+    "OD_fuel": ToMetric(3.375, 'in'),
+    "ID_fuel": ToMetric(1.0, 'in'),
     #### Nozzle
-    "d_t": ToMetric(0.6, 'in'),
+    "d_t": ToMetric(0.5, 'in'),
     #### Ambient Conditions
     "P_amb": ToMetric(102675.3, 'Pa'),
     ##### CONSTANTS #####
     "Ru": ToMetric(8.3143, 'J/(mol*K)'),
 }
+
+# initialInputs['T'] = ToMetric(4000, 'K')
+# initialInputs['M'] = ToMetric(30.169, 'g/mol')
+# initialInputs['gamma'] = ToMetric(1.2516, 'unitless')
+# initialInputs['rho_fuel'] = ToMetric(1994, 'kg/m^3')
+# initialInputs['n'] = ToMetric(1.681, 'unitless')
+# initialInputs['a'] = ToMetric(9.33E-8, 'unitless')
+# initialInputs['A_inj'] = ToMetric(6.4e-6, 'm^2')
+# initialInputs['d_t'] = ToMetric(0.5, 'in')
 
 # Creation of the Model, for more information look at Model.py
 model = Model(initialInputs)
@@ -47,30 +59,47 @@ df = model.ODE45()
 
 #### PLOTTING ####
 ## Formulate CSV files and will put into CSV folder
-print(tabulate(df.iloc[::10], headers='keys', tablefmt='fancy_grid')) # Print every 10th row
+# print(tabulate(df.iloc[::10], headers='keys', tablefmt='fancy_grid')) # Print every 10th row
 df.to_csv("src/Model/CSV/current_data.csv", index=False) # Save dataframe to csv
+
+moi = initialInputs['rho_ox']*initialInputs['V_tank']*0.2
+total_impulse = df['impulse'].iloc[-1]
+
+Isp = total_impulse/ToEnglish(model.mt_i, 'kg')
+# print(ToEnglish(model.mt_i, 'kg'))
+print(f'Total Impulse: {total_impulse} [lbm-s]')
+print(f'Specific Impulse: {Isp} [s]')
+
+# # ## Plotting Values from df model
+# # # Thrust Over Time
+# plt.figure()
+# plt.grid(True)
+# plt.plot(df['time'], df['cstar'], linewidth=2)
+# plt.title('Thrust vs. Time')
+# plt.xlabel('Time (s)')
+# plt.ylabel('Thrust (lbf)')
 
 ## Plotting Values from df model
 # Thrust Over Time
 plt.figure()
-plt.grid(True)
 plt.plot(df['time'], df['thrust'], linewidth=2)
+plt.grid(which='both', linestyle='--', linewidth=0.5)
 plt.title('Thrust vs. Time')
 plt.xlabel('Time (s)')
 plt.ylabel('Thrust (lbf)')
 
 # Impulse Over Time
 plt.figure()
-plt.grid(True)
 plt.plot(df['time'], df['impulse'], linewidth=2)
+plt.grid(which='both', linestyle='--', linewidth=0.5)
 plt.title('Impulse vs. Time')
 plt.xlabel('Time (s)')
 plt.ylabel('Total Impulse Produced (lbf-s)')
 
 # OF Ratio Over Time
 plt.figure()
-plt.grid(True)
 plt.plot(df['time'], df['OF'], linewidth=2)
+plt.grid(which='both', linestyle='--', linewidth=0.5)
 plt.title('Mixture Ratio vs. Time')
 plt.xlabel('Time (s)')
 plt.ylabel('O/F Ratio')
@@ -140,10 +169,10 @@ for a_inj in a_inj_range:
     plt.ylabel("Chamber Pressure (psi)")
 
 # Reset the injector area to its original value
-initialInputs['A_inj'] = ToMetric(6.4E-6, 'm^2')
+initialInputs['A_inj'] = ToMetric(9.4e-6, 'm^2')
 
 # Define a range of throat diameters for analysis
-d_t_range = np.linspace(0.3, 0.7, 8)
+d_t_range = np.linspace(0.4, 0.7, 8)
 
 # Plot thrust vs time for different throat diameters
 plt.figure()
@@ -177,14 +206,22 @@ for d_t in d_t_range:
     plt.ylabel("Chamber Pressure (psi)")
 
 # Reset the throat diameter to its original value
-initialInputs['d_t'] = ToMetric(0.6, 'in')
+initialInputs['d_t'] = ToMetric(0.5, 'in')
 
 # Create model instances for different fuel mixtures
 model1 = Model(initialInputs)
-initialInputs['T'] = ToMetric(5583.19, 'K')
-initialInputs['M'] = ToMetric(39.992, 'g/mol')
-initialInputs['gamma'] = ToMetric(1.1587, 'unitless')
-initialInputs['rho_fuel'] = ToMetric(2767.99, 'kg/m^3')
+# initialInputs['T'] = ToMetric(5583.19, 'K')
+# initialInputs['M'] = ToMetric(39.992, 'g/mol')
+# initialInputs['gamma'] = ToMetric(1.1587, 'unitless')
+# initialInputs['rho_fuel'] = ToMetric(2767.99, 'kg/m^3')
+initialInputs['T'] = ToMetric(4000, 'K')
+initialInputs['M'] = ToMetric(30.169, 'g/mol')
+initialInputs['gamma'] = ToMetric(1.2516, 'unitless')
+initialInputs['rho_fuel'] = ToMetric(1994, 'kg/m^3')
+initialInputs['n'] = ToMetric(1.681, 'unitless')
+initialInputs['a'] = ToMetric(9.33E-8, 'unitless')
+# initialInputs['A_inj'] = ToMetric(6.4e-6, 'm^2')
+# initialInputs['d_t'] = ToMetric(0.5, 'in')
 model2 = Model(initialInputs)
 
 # Solve the ODEs for each model
@@ -195,7 +232,7 @@ df2 = model2.ODE45()
 plt.figure()
 plt.grid(True)
 plt.plot(df1['time'], df1['thrust'], linewidth=2, label="0% Aluminum")
-plt.plot(df2['time'], df2['thrust'], linewidth=2, label="100% Aluminum")
+plt.plot(df2['time'], df2['thrust'], linewidth=2, label="60% Aluminum")
 plt.title('Thrust vs. Time for Various Fuel Mixtures')
 plt.xlabel('Time (s)')
 plt.ylabel('Thrust (lbf)')
@@ -203,7 +240,7 @@ plt.ylabel('Thrust (lbf)')
 # Plot chamber pressure vs time for different fuel mixtures
 plt.figure()
 plt.plot(df1['time'], df1['Pc'], linewidth=2, label="0% Aluminum")
-plt.plot(df2['time'], df2['Pc'], linewidth=2, label="100% Aluminum")
+plt.plot(df2['time'], df2['Pc'], linewidth=2, label="60% Aluminum")
 plt.grid(which='both', linestyle='--', linewidth=0.5)
 plt.legend(loc="best")
 plt.title("Chamber Pressures Over Time for Various Fuel Mixtures")
