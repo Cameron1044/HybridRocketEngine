@@ -84,7 +84,7 @@ class CombustionModel():
         # Calculate the current state of the combustion chamber and fuel grain
         R_prime = Ru / M_chmb
         A_p = np.pi * r**2
-        A_b = 2 * np.pi * r * L
+        A_b = 2 * np.pi * r * L * 2
         V_chmb = A_p * L
         rho_chmb = Pc / (R_prime * T_chmb)
         return A_p, A_b, V_chmb, rho_chmb, R_prime

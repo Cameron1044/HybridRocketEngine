@@ -19,19 +19,19 @@ initialInputs = {
     "V_tank": ToMetric(3, 'L'),
     "P_tank": ToMetric(3000, 'psi'),
     #### Injector
-    "A_inj": ToMetric(1.4e-5, 'm^2'),
+    "A_inj": ToMetric(1.8e-5, 'm^2'),
     "C_d": ToMetric(0.4, 'unitless'),
     #### Fuel Properties
-    "rho_fuel": ToMetric(1994, 'kg/m^3'),
+    "rho_fuel": ToMetric(2089.83281, 'kg/m^3'),
     ## Fuel Regression Properties
     "n": ToMetric(1.681, 'unitless'),
-    "a": ToMetric(9.33E-8, 'unitless'),
+    "a": ToMetric(9.33E-8*3, 'unitless'),
     #### Fuel Grain
-    "L_fuel": ToMetric(12, 'in'),
+    "L_fuel": ToMetric(24, 'in'),
     "OD_fuel": ToMetric(3.375, 'in'),
-    "ID_fuel": ToMetric(2.8, 'in'),
+    "ID_fuel": ToMetric(2.9, 'in'),
     #### Nozzle
-    "d_t": ToMetric(0.7, 'in'),
+    "d_t": ToMetric(1, 'in'),
     ### Ambient Conditions
     "P_amb": ToMetric(102675.3, 'Pa'),
     ##### CONSTANTS #####
@@ -197,10 +197,10 @@ column_mapping = {
 }
 
 # Format each value in the DataFrame to have 3 decimal places
-dfBe = dfBe.apply(lambda col: col.map(lambda x: format(x, '.3f')))
+dfZK = dfZK.apply(lambda col: col.map(lambda x: format(x, '.3f')))
 
 # Rename the columns
-dfBe.rename(columns=column_mapping, inplace=True)
+dfZK.rename(columns=column_mapping, inplace=True)
 
 # Save the DataFrame to a CSV file
-dfBe.to_csv("src/Model/CSV/current_data.csv", index=False)
+dfZK.to_csv("src/Model/CSV/current_data.csv", index=False)
