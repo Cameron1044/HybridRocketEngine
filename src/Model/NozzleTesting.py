@@ -32,7 +32,7 @@ Arat = np.sqrt((1/Me**2)*((2/(gamma + 1))*(1 + (gamma-1)*Me**2/2))**((gamma+1)/(
 Ae = Arat * At
 print("Correct Nozzle Area Ratio is", Ae)
 De = np.sqrt(4*Ae/np.pi)
-print("Correct Nozzle Exit Diameter is", De)
+print("Correct Nozzle Exit Diameter is", De, "inches")
 
 # Ratio of P0 to Pe is PRESERVED regardless of how P0 changes, just a quirk of having choked flow
 Pe_arr = []
