@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 ## Inputs/Givens
 
 # Pressures
-Pc =  875 # Pressure of the Combustion Chamber [psi] 
+Pc =  750 # Pressure of the Combustion Chamber [psi] 
 Pc_arr = np.linspace(Pc, 100)
 P0 = Pc # Since flow is essentially stagnant in combustion chamber, we consider this the total pressure of the flow
 Pamb = 14.93 # Ambient pressure at launch site (Fort Collins, CO)
@@ -47,3 +47,22 @@ for pressureRatios in PeoPamb:
     if pressureRatios < 0.4:
         print("Approximate Chamber Pressure for Summerfield Flow Separation Condition is ", Pc_arr[PeoPamb.index(pressureRatios)])
         break
+
+
+# Calculate Thrust and Thrust Coefficient for Given Nozzle Design
+
+# Preallocate empty arrays
+Cf = []
+F = []
+
+for index, Pe in enumerate(Pe_arr):
+
+    Cf.append(np.sqrt( (2*(gamma)**2/gamma - 1) * (2/(gamma+1))**((gamma+1)/(gamma-1)) * (1 - (Pe/Pc_arr[1])**((gamma - 1)/gamma))))
+
+    F.append(At * Pc_arr[index] * Cf[index])
+
+# Plot force as a function of time / chamber pressure
+plt.figure()
+plt.plot(F, Pc_arr)
+
+print(Cf)
