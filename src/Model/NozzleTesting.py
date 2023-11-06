@@ -24,7 +24,7 @@ gamma = 1.205 # Ratio of speicifc heats
 
 # Calculate exit mach number from pressure ratio
 Me = np.sqrt( ( (P0oPe) ** ((gamma-1)/gamma) - 1) / ( (gamma - 1) / 2) )
-print("Mach at Nozzle exit is", Me, ", that's pretty fast!")
+print("Mach at Nozzle exit is", Me)
 
 # Armed with exit Mach number, calcualte area ratio and exit area 
 Arat = np.sqrt((1/Me**2)*((2/(gamma + 1))*(1 + (gamma-1)*Me**2/2))**((gamma+1)/(gamma-1))) 
@@ -61,7 +61,5 @@ for index, Pe in enumerate(Pe_arr):
     F.append(At * Pc_arr[index] * Cf[index])
 
 # Plot force as a function of time / chamber pressure
-plt.figure()
-plt.plot(F, Pc_arr)
-
-print(Cf)
+# plt.figure()
+# plt.plot(F, Pc_arr)
