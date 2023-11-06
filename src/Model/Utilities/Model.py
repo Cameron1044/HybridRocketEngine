@@ -15,7 +15,7 @@ class Model():
     considering various factors such as combustion, blowdown, pressure differences, and more.
     """
 
-    def __init__(self, initialInputs, ZK=True, iterations=1000, tspan=[0, 20]):
+    def __init__(self, initialInputs, ZK=True, iterations=5000, tspan=[0, 20]):
         """
         Initialize the Model class.
 
@@ -62,7 +62,7 @@ class Model():
             Pc_i = self.initialInputs["P_amb"]              # Initial Pressure of the Combustion Chamber [Pa]
             r_i = self.initialInputs['ID_fuel'] / 2         # Initial Radius of the Fuel Grain Port [m]
             self.mt_i = nl_i * self.blowdown.MW_N2O + mf_i          # Initial Total Mass of the Fuel + Oxidizer [kg]
-            self.y0 = [Ti, ng_i, nl_i, mf_i, Pc_i, r_i, 0]  # Initial Conditions for the ODE45 Solver
+            self.y0 = [Ti, ng_i, nl_i, mf_i, Pc_i, 0, 0]  # Initial Conditions for the ODE45 Solver
 
         else:
             # Using the Bernoulli model for blowdown
@@ -80,7 +80,7 @@ class Model():
             Vu_i = self.blowdown.V_tank * self.blowdown.ullageFraction              # Initial Volume of the Ullage [m^3]
             r_i = self.initialInputs['ID_fuel'] / 2                                 # Initial Radius of the Fuel Grain Port [m]
             self.mt_i = mo_i + mf_i                                                 # Initial Total Mass of the Fuel + Oxidizer [kg]
-            self.y0 = [mo_i, mf_i, Po_i, Pc_i, Vu_i, r_i, 0]                        # Initial Conditions for the ODE45 Solver
+            self.y0 = [mo_i, mf_i, Po_i, Pc_i, Vu_i, 0, 0]                        # Initial Conditions for the ODE45 Solver
 
 
     def termination_event_radius(self, t, y):

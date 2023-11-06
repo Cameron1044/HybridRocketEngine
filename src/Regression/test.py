@@ -3,13 +3,21 @@ from abc import abstractmethod
 import cv2
 import numpy as np
 import math
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
 
 class Regression():
-    def __init__(self, outerDiameter, mapDim=1000):
+    def __init__(self, outerDiameter, mapDim=1000, threshold=0.0, diskFilterRadius=20):
         self.outerDiameter = outerDiameter
         self.mapDim = mapDim
-        self.mapX, self.mapY = np.meshgrid(np.linspace(-1.5, 1.5, mapDim), np.linspace(-1.5, 1.5, mapDim))
-        self.r = 1 / 2
+        self.gridSize = 1.5
+        self.pixelDiameter = int(self.mapDim / self.gridSize)
+        self.mapX, self.mapY = np.meshgrid(np.linspace(-self.gridSize, self.gridSize, mapDim), np.linspace(-self.gridSize, self.gridSize, mapDim))
+        self.threshold = threshold
+        self.diskFilterRadius = diskFilterRadius
+        self.rdot = self.calcR()
 
     @abstractmethod
     def generate_grain_geometry(self):
@@ -27,11 +35,11 @@ class Regression():
 
     def mapToLength(self, value):
         """Converts pixels to meters. Used to extract real distances from pixel distances such as contour lengths"""
-        return self.outerDiameter * (value / self.mapDim / 1.5)
+        return self.outerDiameter * (value / self.pixelDiameter)
 
     def mapToArea(self, value):
         """Used to convert sq pixels to sqm. For extracting real areas from the regression map."""
-        return (self.outerDiameter ** 2) * (value / ((self.mapDim/1.5) ** 2))
+        return (self.outerDiameter ** 2) * (value / ((self.pixelDiameter) ** 2))
 
     def find_contour(self, img):
         # Find contours
@@ -51,7 +59,8 @@ class Regression():
 
         return colored_img
 
-    def apply_disk_filter(self, img, radius):
+    def apply_disk_filter(self, img):
+        radius = self.diskFilterRadius + 1
         # Create a disk-shaped kernel
         y, x = np.ogrid[-radius: radius+1, -radius: radius+1]
         mask = x**2 + y**2 <= radius**2
@@ -64,20 +73,10 @@ class Regression():
         
         return filtered_img
 
-    def apply_threshold(self, prev_img, img, threshold_value):
-        if threshold_value < 0 or threshold_value > 1:
+    def apply_threshold(self, img):
+        if self.threshold < 0 or self.threshold > 1:
             raise ValueError("Threshold value must be between 0 and 1")
-        _, thresholded_img = cv2.threshold(img, threshold_value * 255, 255, cv2.THRESH_BINARY)
-        # _, thresholded_img0 = cv2.threshold(img, 0 * 255, 255, cv2.THRESH_BINARY)
-        # prev_nonzero = np.count_nonzero(prev_img)
-        # current_nonzero = np.count_nonzero(thresholded_img)
-        # current_nonzero0 = np.count_nonzero(thresholded_img0)
-        # area_thresh = current_nonzero - prev_nonzero
-        # area_thresh0 = current_nonzero0 - prev_nonzero
-        # area_ratio = area_thresh / area_thresh0
-        # rdot = self.mapToLength(40*area_ratio)
-        # self.r = self.r + rdot
-        # print(f"{threshold_value} : {area_thresh} : {area_thresh0} : {area_ratio} : {rdot} : {self.r}")
+        _, thresholded_img = cv2.threshold(img, self.threshold * 255, 255, cv2.THRESH_BINARY)
         return thresholded_img
 
     # Function to determine if a contour intersects with a circular boundary
@@ -96,10 +95,10 @@ class Regression():
                 return False
         return True
 
-    def getCorePerimeter(self, img):
+    def getCorePerimeter(self, contours):
         """Used to calculate the Initial Core Perimeter in pixels """
         # Calculates a countour of the given img
-        contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        # contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         # Calculates the initial perimeter of the countour
         firstPass = cv2.arcLength(contours[0], True)
         # Douglas-Peucker Algorithm for Shape Approximation to 0.1 % error
@@ -111,18 +110,109 @@ class Regression():
 
         return perimeter
 
-    def getCoreArea(self, img):
+    def getCoreArea(self, contours):
         """Used to calculate the Initial core area, A_port, in pixels"""
         # Calculates a countour of the given img
-        contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        # contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         # Calculates the area of the countour
         area = cv2.contourArea(contours[0])
         
         return area
     
+    def calcR(self):
+        def count_white_pixels(img):
+            return np.sum(img[1, :] == 255)
+        half_black_white = np.hstack((np.zeros((self.mapDim, self.mapDim//2), dtype=np.uint8), 255*np.ones((self.mapDim, self.mapDim//2), dtype=np.uint8)))
+
+        white_pixel_count1 = count_white_pixels(half_black_white)
+
+        blurred_img = self.apply_disk_filter(half_black_white)
+        thresholded_img = self.apply_threshold(blurred_img)
+
+        white_pixel_count2 = count_white_pixels(thresholded_img)
+        return white_pixel_count2 - white_pixel_count1
+    
+    def showImage(self, img):
+        cv2.imshow('image', img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+    
+    def runLoop(self):
+        base_img = self.generate_grain_geometry()
+        self.showImage(base_img)
+
+        all_contours = []
+        contours = self.find_contour(base_img)
+        all_contours.append(contours)
+        processed_img = base_img.copy()
+        outer_diameter = self.pixelDiameter
+        outer_radius = int(outer_diameter/2)
+        center = (processed_img.shape[0] // 2, processed_img.shape[1] // 2)
+
+        data_columns = [
+            "r", "pixels", "area", "perimeter"
+        ]
+        df = pd.DataFrame(columns=data_columns)
+
+        edgeFlag = False
+        r = 0
+        while True:
+            # Apply regression
+            disk_filtered_img = self.apply_disk_filter(processed_img)
+            thresholded_img = self.apply_threshold(disk_filtered_img)
+
+            mask = np.zeros_like(thresholded_img)
+            cv2.circle(mask, center, outer_radius, (255), -1)
+            masked_thresholded_img = cv2.bitwise_and(thresholded_img, thresholded_img, mask=mask)
+
+            # Check termination condition
+            contours = self.find_contour(thresholded_img)
+
+            if not edgeFlag and (not contours or any(self.contour_intersects_boundary(cont, center, outer_radius) for cont in contours)):
+                edgeFlag = True
+
+            if edgeFlag and (not contours or all(self.contour_intersects_boundary2(cont, center, outer_radius) for cont in contours)):
+                break
+
+            contours_masked = self.find_contour(masked_thresholded_img)
+
+            # Append contours
+            all_contours.append(contours_masked)
+
+            perimeter = self.getCorePerimeter(contours_masked)
+            area = self.getCoreArea(contours_masked)
+            r = r + self.rdot
+
+            new_data = {
+                "r": self.mapToLength(r),
+                "pixels": r,
+                "area": self.mapToArea(area),
+                "perimeter": self.mapToLength(perimeter)
+            }
+            
+            # Append the new data to the dataframe
+            df.loc[len(df)] = new_data
+
+            # Prepare for next iteration
+            processed_img = thresholded_img.copy()
+
+            img = masked_thresholded_img.copy()
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+            cv2.circle(img, center, outer_radius, (0, 0, 255), 3)
+            cv2.drawContours(img, contours_masked, -1, (0, 255, 0), 3)
+            self.showImage(img)
+
+        df.to_csv("src/Regression/burnback_table.csv", index=False)
+
+        colored_img = self.draw_all_contours(base_img, all_contours)
+        cv2.circle(colored_img, center, outer_diameter // 2, (0, 0, 255), 3)
+        self.showImage(colored_img)
+
+        return df
+    
 class StarGeometry(Regression):
-    def __init__(self, outer_diameter, num_points, point_length, point_base_width, mapDim=1000):
-        super().__init__(outer_diameter, mapDim)
+    def __init__(self, outer_diameter, num_points, point_length, point_base_width, mapDim=1000, threshold=0.36, diskFilterRadius=20):
+        super().__init__(outer_diameter, mapDim, threshold, diskFilterRadius)
         self.outer_diameter = outer_diameter
         self.num_points = num_points
         self.point_length = point_length
@@ -158,8 +248,8 @@ class StarGeometry(Regression):
         return img
     
 class FinocylGeometry(Regression):
-    def __init__(self, outer_diameter, inner_diameter, num_fins, fin_length, fin_width, mapDim=1000):
-        super().__init__(outer_diameter, mapDim)
+    def __init__(self, outer_diameter, inner_diameter, num_fins, fin_length, fin_width, mapDim=1000, threshold=0.36, diskFilterRadius=20):
+        super().__init__(outer_diameter, mapDim, threshold, diskFilterRadius)
         self.outer_diameter = outer_diameter
         self.inner_diameter = inner_diameter
         self.num_fins = num_fins
@@ -194,61 +284,95 @@ class FinocylGeometry(Regression):
             img[np.logical_and(vect, ends)] = 255
         return img
     
-outer_diameter = 4
-finocyl = FinocylGeometry(outer_diameter=outer_diameter, inner_diameter=1.25, num_fins=8, fin_length=1.5, fin_width=0.2)
-base_img = finocyl.generate_grain_geometry()
-cv2.imshow('All Contours of Regressed Stars', base_img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+def ToMetric(value, conversion, n=1):
+    ## To take in a value and the current unit it is in to change it into metric
+    ## INPUTS: value - the value we want to convert
+    ##         unit  - the unit that will be changed to metric
+    ##         n     - Fuel Regression constant used to calculate a
+    ##
+    ## OUTPUTS: The Value will have it's units changed into metric / SI units
+    ##          If the unit is already in metric, nothing will happen
+    conversionDict = {
+        ## For Units that are English
+        # Length --> m
+        "in": 1/39.37,
+        "ft": 1/3.281,
+        # Surfrace Area --> m2
+        "in^2": 1/1550,
+        "ft^2": 1/10.764,
+        # Volume --> m3
+        "in^3": 1/61020,
+        "ft^3": 1/35.315,
+        # Pressure --> Pa
+        "psi": 6895,
+        # Mass --> kg
+        "lbm": 1/2.205,
+        # Force --> N
+        "lbf": 4.448,
+        # Density --> kg/m^3
+        "lbm/in^3": 27680,
+        "lbm/ft^3": 16.01846337396,
+        # Molecular Weight --> lb/lbmo
+        "lb/lbmol": 1/1000,
+        # Temperature --> K
+        "R": 5/9 ,
 
-all_contours = []
-contours = finocyl.find_contour(base_img)
-all_contours.append(contours)
-processed_img = base_img.copy()
-outer_diameter = int(finocyl.mapDim/1.5)
-outer_radius = outer_diameter // 2
-center = (processed_img.shape[0] // 2, processed_img.shape[1] // 2)
+        ## For Units that are Metric
+        # Length --> m
+        "m": 1,
+        "cm": 1/100,
+        "mm": 1/1000,
+        # Surfrace Area --> m2
+        "m^2": 1,
+        "cm^2": 1/10000,
+        "mm^2": (1e-6),
+        # Volume --> m3
+        "m^3": 1,
+        "cm^3": (1e-6),
+        "mm^3": (1e-9),
+        "L": 1/1000,
+        # Pressure --> Pa
+        "Pa": 1,
+        "kPa": 1000,
+        # Mass --> kg
+        "kg": 1,
+        "g": 1/1000,
+        # Force --> N
+        "N": 1,
+        "kN": 1000,
+        # Density --> kg/m^3
+        "kg/m^3": 1,
+        # Molecular Weight --> kg/mol
+        "g/mol": 1/1000,
+        "kg/mol": 1,
+        # Temperature --> K
+        "K": 1,
+        # Gas Constant --> J/(mol*K)
+        "J/(mol*K)": 1,
 
-edgeFlag = False
-i = 0
-while True:
-    # Apply regression
-    disk_filtered_img = finocyl.apply_disk_filter(processed_img, 20)
-    thresholded_img = finocyl.apply_threshold(processed_img, disk_filtered_img, 0.36)
+        ## Unitless
+        "unitless": 1,
 
-    mask = np.zeros_like(thresholded_img)
-    cv2.circle(mask, center, outer_diameter // 2, (255), -1)
-    masked_thresholded_img = cv2.bitwise_and(thresholded_img, thresholded_img, mask=mask)
+        ## For a Burn coefficient
+        "a": (0.0254**(1 + 2*(n)))*(0.453592**(-n))
+    }
+    return value * conversionDict[conversion]
 
-    # Check termination condition
-    contours = finocyl.find_contour(thresholded_img)
+    
+outer_diameter = ToMetric(3.375, 'in')
+inner_diameter = ToMetric(1.5, 'in')
+fin_length = ToMetric(1.25, 'in')
+fin_width = ToMetric(0.2, 'in')
+num_fins = 6
 
-    if not edgeFlag and (not contours or any(finocyl.contour_intersects_boundary(cont, center, outer_radius) for cont in contours)):
-        edgeFlag = True
+mapDim = 1000
+finocyl = FinocylGeometry(outer_diameter=outer_diameter, inner_diameter=inner_diameter, num_fins=num_fins, fin_length=fin_length, fin_width=fin_width, mapDim=mapDim, threshold=0.36, diskFilterRadius=40)
+df = finocyl.runLoop()
 
-    if edgeFlag and (not contours or all(finocyl.contour_intersects_boundary2(cont, center, outer_radius) for cont in contours)):
-        break
+plt.figure()
+plt.plot(df['r'], df['area'])
 
-    contours_masked = finocyl.find_contour(masked_thresholded_img)
+plt.figure()
+plt.plot(df['r'], df['perimeter'])
 
-    # Append contours
-    all_contours.append(contours_masked)
-
-    # Prepare for next iteration
-    processed_img = thresholded_img.copy()
-
-    img = masked_thresholded_img.copy()
-    # if len(img.shape) == 2:
-    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-    cv2.circle(img, center, outer_diameter // 2, (0, 0, 255), 3)
-    cv2.drawContours(img, contours_masked, -1, (0, 255, 0), 3)
-    cv2.imshow('All Contours of Regressed Stars', img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-colored_img = finocyl.draw_all_contours(base_img, all_contours)
-
-cv2.circle(colored_img, center, outer_diameter // 2, (0, 0, 255), 3)
-cv2.imshow('All Contours of Regressed Stars', colored_img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+plt.show()

@@ -24,10 +24,15 @@ class ChemicalProperties():
         self.G4 = 2.886e-5
         self.G5 = 2
 
-        self.Q1 = 2.781  # molar specific volume of liquid N2O [m**3/kmol] coefficients
-        self.Q2 = 0.27244
-        self.Q3 = 309.57
-        self.Q4 = 0.2882
+        # self.Q1 = 2.781  # molar specific volume of liquid N2O [m**3/kmol] coefficients
+        # self.Q2 = 0.27244
+        # self.Q3 = 309.57
+        # self.Q4 = 0.2882
+
+        self.Q1 = 1.87450233  # molar specific volume of liquid N2O [m**3/kmol] coefficients
+        self.Q2 = 0.221580723
+        self.Q3 = 357.900724
+        self.Q4 = 0.295592424
 
         self.J1 = 2.3215e7 # heat of vaporization of N2O [J/kmol] coefficients
         self.J2 = 0.384 # valid for Temp range [182.3 K - 309.57 K]
@@ -56,6 +61,8 @@ class ChemicalProperties():
     def densityN2OLiquid(self, T):
         rho_li = self.MW_N2O / self.molarVolumeN2O(T)
         return rho_li
+    
+    # y = 44.013/(Q2**(1 + (1 - x/Q3)**Q4) / Q1)
     
     def vaporPressureN2O(self, T):
         P_sat = np.exp(self.G1 + self.G2 / T + self.G3 * np.log(T) + self.G4 * T**self.G5) # vapor pressure of N20 [Pa]

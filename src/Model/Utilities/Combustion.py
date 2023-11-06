@@ -5,6 +5,7 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 from scipy.interpolate import Rbf, griddata
 from scipy.spatial import Delaunay
+from .utilities import ToMetric, ToEnglish, plot_graph
 
 class CombustionModel():
     """
@@ -30,9 +31,11 @@ class CombustionModel():
         self.rho_f = inputs["rho_fuel"]         # Density of the Fuel Grain
         self.Pe = inputs["P_amb"]               # Ambient Pressure
         self.A_t = np.pi*(inputs["d_t"]/2)**2   # Area of the Nozzle Throat
+        self.test = 0
 
         self.OF = 1
         self.df = pd.read_csv('src/GDL/results.csv')
+        self.geodf = pd.read_csv('src/Regression/burnback_table.csv')
         self.points = self.df[['OF', 'Pc']].values
         self.fuelProperties(OF=self.OF, Pc=self.Pe)   # Set the initial fuel properties
 
@@ -61,6 +64,48 @@ class CombustionModel():
             except:
                 pass
 
+    def fuelGeometry(self, r):
+        # Ensure the DataFrame is sorted by 'r'
+        self.geodf = self.geodf.sort_values('r')
+
+        # Find the indices where 'r' would be inserted to maintain order
+        idx_below = self.geodf['r'].searchsorted(r, side='right') - 1
+        idx_above = idx_below + 1
+        print(idx_below, idx_above)
+
+        # If the exact value is found, return the corresponding 'area' and 'perimeter'
+        if idx_below >= 0 and self.geodf.iloc[idx_below]['r'] == r:
+            area = self.geodf.iloc[idx_below]['area']
+            perimeter = self.geodf.iloc[idx_below]['perimeter']
+            return area, perimeter
+
+        # If r is outside the range of 'r' values, clamp the index
+        if idx_below < 0:
+            idx_below = 0
+        if idx_above >= len(self.geodf):
+            idx_above = len(self.geodf) - 1
+
+        # Perform linear interpolation for 'area' and 'perimeter'
+        r_below = self.geodf.iloc[idx_below]['r']
+        r_above = self.geodf.iloc[idx_above]['r']
+        area_below = self.geodf.iloc[idx_below]['area']
+        area_above = self.geodf.iloc[idx_above]['area']
+        perimeter_below = self.geodf.iloc[idx_below]['perimeter']
+        perimeter_above = self.geodf.iloc[idx_above]['perimeter']
+
+        if r_below == r_above:
+            # print(area_below, perimeter_below, r, "equal")
+            return area_below, perimeter_below
+        # Calculate interpolation weights
+        t = (r - r_below) / (r_above - r_below)
+
+        # Interpolate 'area' and 'perimeter'
+        area = area_below + t * (area_above - area_below)
+        perimeter = perimeter_below + t * (perimeter_above - perimeter_below)
+        # print(area, perimeter, r, "below")
+        return area, perimeter
+
+
     def fuelGrainState(self, r, Pc):
         """
         # Purpose:  Calculate the current state of the fuel grain in the combustion chamber
@@ -83,8 +128,14 @@ class CombustionModel():
 
         # Calculate the current state of the combustion chamber and fuel grain
         R_prime = Ru / M_chmb
-        A_p = np.pi * r**2
-        A_b = 2 * np.pi * r * L * 2
+
+
+        # A_p = np.pi * r**2
+        # A_b = 2 * np.pi * r * L * 2
+        area, perimeter = self.fuelGeometry(r)
+        A_p = area
+        A_b = perimeter * L
+
         V_chmb = A_p * L
         rho_chmb = Pc / (R_prime * T_chmb)
         return A_p, A_b, V_chmb, rho_chmb, R_prime
@@ -170,5 +221,14 @@ class CombustionModel():
         self.fuelProperties(OF=self.OF, Pc=Pc)
         dPc_dt = self.PChmbDeriv(A_b, V_chmb, rho_chmb, R_prime, dr_dt, dmo_dt, Pc)
 
+        # inside = 2*self.gamma**2/(self.gamma-1) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(self.Pe/Pc)**((self.gamma-1)/self.gamma))
+        # if self.Pe > Pc:
+        #     print(ToEnglish(self.Pe, "Pa"), ToEnglish(Pc, "Pa"), ToEnglish(dPc_dt, "Pa"), "ERROR")
+        # else:
+        #     print(ToEnglish(self.Pe, "Pa"), ToEnglish(Pc, "Pa"), ToEnglish(dPc_dt, "Pa"), "OK")
+        # self.test += 1
+
         F = self.A_t*Pc*np.sqrt(2*self.gamma**2/(self.gamma-1) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(self.Pe/Pc)**((self.gamma-1)/self.gamma)))
+
+
         return dr_dt, dmf_dt, dPc_dt, F, self.OF, self.T_chmb, self.M_chmb, self.gamma
