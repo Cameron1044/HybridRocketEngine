@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 ## Inputs/Givens
 
 # Pressures
-Pc =  750 # Pressure of the Combustion Chamber [psi] 
+Pc =  800 # Pressure of the Combustion Chamber [psi] 
 Pc_arr = np.linspace(Pc, 100)
 P0 = Pc # Since flow is essentially stagnant in combustion chamber, we consider this the total pressure of the flow
 Pamb = 14.93 # Ambient pressure at launch site (Fort Collins, CO)
@@ -54,12 +54,14 @@ for pressureRatios in PeoPamb:
 Cf = []
 F = []
 
+# Fill arrays with a for loop
 for index, Pe in enumerate(Pe_arr):
 
-    Cf.append(np.sqrt( (2*(gamma)**2/gamma - 1) * (2/(gamma+1))**((gamma+1)/(gamma-1)) * (1 - (Pe/Pc_arr[1])**((gamma - 1)/gamma))))
+    Cf.append(np.sqrt( (2*(gamma)**2/gamma - 1) * (2/(gamma+1))**((gamma+1)/(gamma-1)) * (1 - (Pe_arr[index]/Pc_arr[index])**((gamma - 1)/gamma))))
 
     F.append(At * Pc_arr[index] * Cf[index])
 
 # Plot force as a function of time / chamber pressure
 # plt.figure()
 # plt.plot(F, Pc_arr)
+
