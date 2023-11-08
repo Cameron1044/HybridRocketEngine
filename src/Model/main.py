@@ -32,7 +32,7 @@ initialInputs = {
     "ID_fuel": ToMetric(2.9, 'in'),
     #### Nozzle
     "d_t": ToMetric(1, 'in'),
-    "alpha": np.deg2rad(15), # Default trigonometric unit for numpy is degrees :D
+    "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
     ### Ambient Conditions
     "P_amb": ToMetric(102675.3, 'Pa'),
     ##### CONSTANTS #####
