@@ -29,7 +29,7 @@ class CombustionModel():
         self.L = inputs["L_fuel"]               # Length of the Fuel Grain
         self.Ru = inputs["Ru"]                  # Universal Gas Constant
         self.rho_f = inputs["rho_fuel"]         # Density of the Fuel Grain
-        self.Pe = inputs["P_amb"]               # Ambient Pressure
+        self.Pe = inputs["P_amb"]               # Ambient Pressure, fine until Summerfield Condition
         self.A_t = np.pi*(inputs["d_t"]/2)**2   # Area of the Nozzle Throat
         self.test = 0
         self.alpha = inputs["alpha"]            # Nozzle divergent half-cone angle
@@ -231,5 +231,5 @@ class CombustionModel():
         # self.test += 1
 
         F = self.nozzlelambda * self.A_t * Pc * np.sqrt( ((2*self.gamma**2)/(self.gamma-1)) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(self.Pe/Pc)**((self.gamma-1)/self.gamma)) )
-
+        print(self.nozzlelambda)
         return dr_dt, dmf_dt, dPc_dt, F, self.OF, self.T_chmb, self.M_chmb, self.gamma 
