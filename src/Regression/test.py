@@ -361,10 +361,10 @@ def ToMetric(value, conversion, n=1):
 
     
 outer_diameter = ToMetric(3.375, 'in')
-inner_diameter = ToMetric(2, 'in')
+inner_diameter = ToMetric(1.5, 'in')
 fin_length = ToMetric(1.4, 'in')
-fin_width = ToMetric(0.5, 'in')
-num_fins = 6
+fin_width = ToMetric(0.35, 'in')
+num_fins = 8
 
 mapDim = 2500
 finocyl = FinocylGeometry(outer_diameter=outer_diameter, inner_diameter=inner_diameter, num_fins=num_fins, fin_length=fin_length, fin_width=fin_width, mapDim=mapDim, threshold=0.36, diskFilterRadius=40)

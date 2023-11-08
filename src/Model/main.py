@@ -31,7 +31,7 @@ initialInputs = {
     "OD_fuel": ToMetric(3.375, 'in'),
     "ID_fuel": ToMetric(2.9, 'in'),
     #### Nozzle
-    "d_t": ToMetric(1, 'in'),
+    "d_t": ToMetric(1.2, 'in'),
     "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
     ### Ambient Conditions
     "P_amb": ToMetric(102675.3, 'Pa'),
@@ -181,6 +181,7 @@ plt.show()
 column_mapping = {
     "time": "time (s)",
     "thrust": "thrust (lbf)",
+    "thrustN": "thrust (N)",
     "impulse": "impulse (lbf-s)",
     "Pc": "Chamber pressure (psi)",
     "Pox": "Tank pressure (psi)",

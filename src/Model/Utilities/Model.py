@@ -223,7 +223,7 @@ class Model():
         """
         # Define data columns and initialize the dataframe
         data_columns = [
-            "time", "thrust", "impulse", "Pc", "Pox", "mox", "mf",
+            "time", "thrust", "thrustN", "impulse", "Pc", "Pox", "mox", "mf",
             "dmox", "dmf", "OF", "r", "dm_total_dt", "cstar", "T_chmb", "M_chmb", "gamma"
         ]
         self.df = pd.DataFrame(columns=data_columns)
@@ -281,6 +281,7 @@ class Model():
             new_data = {
                 "time": ti,
                 "thrust": ToEnglish(T, 'N'),
+                "thrustN": T,
                 "impulse": ToEnglish(impulse, 'N'),
                 "Pc": ToEnglish(Pc, 'Pa'),
                 "Pox": ToEnglish(Po, 'Pa'),
