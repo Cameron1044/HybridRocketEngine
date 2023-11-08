@@ -230,7 +230,7 @@ class CombustionModel():
         #     print(ToEnglish(self.Pe, "Pa"), ToEnglish(Pc, "Pa"), ToEnglish(dPc_dt, "Pa"), "OK")
         # self.test += 1
 
-        F = self.nozzlelambda * self.A_t*Pc*np.sqrt(2*self.gamma**2/(self.gamma-1) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(self.Pe/Pc)**((self.gamma-1)/self.gamma)))
+        F = self.A_t * Pc * np.sqrt(2*self.gamma**2/(self.gamma-1) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(self.Pe/Pc)**((self.gamma-1)/self.gamma)))
 
 
         return dr_dt, dmf_dt, dPc_dt, F, self.OF, self.T_chmb, self.M_chmb, self.gamma 
