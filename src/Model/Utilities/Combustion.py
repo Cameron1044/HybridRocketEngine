@@ -32,12 +32,14 @@ class CombustionModel():
         self.Pe = inputs["P_amb"]               # Ambient Pressure
         self.A_t = np.pi*(inputs["d_t"]/2)**2   # Area of the Nozzle Throat
         self.test = 0
+        self.alpha = inputs["alpha"]            # Nozzle divergent half-cone angle
 
         self.OF = 1
         self.df = pd.read_csv('src/GDL/results.csv')
         self.geodf = pd.read_csv('src/Regression/burnback_table.csv')
         self.points = self.df[['OF', 'Pc']].values
         self.fuelProperties(OF=self.OF, Pc=self.Pe)   # Set the initial fuel properties
+        self.nozzlelambda = ((1+np.cos(self.alpha)) / 2 ) # Calculate nozzle correction factor
 
     def OFratio(self, dm_ox, dm_f):
         """
@@ -228,7 +230,7 @@ class CombustionModel():
         #     print(ToEnglish(self.Pe, "Pa"), ToEnglish(Pc, "Pa"), ToEnglish(dPc_dt, "Pa"), "OK")
         # self.test += 1
 
-        F = self.A_t*Pc*np.sqrt(2*self.gamma**2/(self.gamma-1) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(self.Pe/Pc)**((self.gamma-1)/self.gamma)))
+        F = self.nozzlelambda * self.A_t*Pc*np.sqrt(2*self.gamma**2/(self.gamma-1) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(self.Pe/Pc)**((self.gamma-1)/self.gamma)))
 
 
-        return dr_dt, dmf_dt, dPc_dt, F, self.OF, self.T_chmb, self.M_chmb, self.gamma
+        return dr_dt, dmf_dt, dPc_dt, F, self.OF, self.T_chmb, self.M_chmb, self.gamma 

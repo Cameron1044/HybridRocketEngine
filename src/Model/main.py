@@ -25,13 +25,14 @@ initialInputs = {
     "rho_fuel": ToMetric(2089.83281, 'kg/m^3'),
     ## Fuel Regression Properties
     "n": ToMetric(1.681, 'unitless'),
-    "a": ToMetric(9.33E-8, 'unitless'),
+    "a": ToMetric(9.33E-8*3, 'unitless'),
     #### Fuel Grain
-    "L_fuel": ToMetric(12, 'in'),
+    "L_fuel": ToMetric(24, 'in'),
     "OD_fuel": ToMetric(3.375, 'in'),
     "ID_fuel": ToMetric(2.9, 'in'),
     #### Nozzle
     "d_t": ToMetric(1, 'in'),
+    "alpha": 15, # Default trigonometric unit for numpy is degrees :D
     ### Ambient Conditions
     "P_amb": ToMetric(102675.3, 'Pa'),
     ##### CONSTANTS #####
