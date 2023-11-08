@@ -31,14 +31,14 @@ class CombustionModel():
         self.rho_f = inputs["rho_fuel"]         # Density of the Fuel Grain
         self.Pe = inputs["P_amb"]               # Ambient Pressure, fine until Summerfield Condition
         self.A_t = np.pi*(inputs["d_t"]/2)**2   # Area of the Nozzle Throat
-        self.PeoPc = self.Pe / 950              # Constant, choked value of Pe/Pc for representative chamber pressure
         self.alpha = inputs["alpha"]            # Nozzle divergent half-cone angle
 
         self.OF = 1
         self.df = pd.read_csv('src/GDL/results.csv')
         self.geodf = pd.read_csv('src/Regression/burnback_table.csv')
         self.points = self.df[['OF', 'Pc']].values
-        self.fuelProperties(OF=self.OF, Pc=self.Pe)   # Set the initial fuel properties
+        self.fuelProperties(OF=self.OF, Pc=self.Pe)     # Set the initial fuel properties
+        self.PeoPc = self.Pe/950                        # Calculate constant, choked value of Pe/Pc for representative chamber pressure
         self.nozzlelambda = ((1+np.cos(self.alpha)) / 2 ) # Calculate nozzle correction factor
 
     def OFratio(self, dm_ox, dm_f):
