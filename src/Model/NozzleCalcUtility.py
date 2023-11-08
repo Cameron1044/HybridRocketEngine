@@ -63,5 +63,5 @@ for index, Pe in enumerate(Pe_arr):
 # Plot force as a function of time / chamber pressure
 plt.figure()
 plt.plot(F, Pc_arr)
-plt.show
+plt.show()
 
