@@ -15,7 +15,7 @@ class Model():
     considering various factors such as combustion, blowdown, pressure differences, and more.
     """
 
-    def __init__(self, initialInputs, ZK=True, iterations=5000, tspan=[0, 20]):
+    def __init__(self, initialInputs, ZK=True, iterations=1000, tspan=[0, 20]):
         """
         Initialize the Model class.
 
@@ -48,8 +48,14 @@ class Model():
         self.combustion = CombustionModel(self.initialInputs)
 
         # Compute initial mass of fuel grain based on given geometric properties
-        fuel_area = np.pi * (self.initialInputs['OD_fuel']**2 - self.initialInputs['ID_fuel']**2) / 4
-        mf_i = self.initialInputs['rho_fuel'] * self.initialInputs['L_fuel'] * fuel_area
+        # fuel_area = np.pi * (self.initialInputs['OD_fuel']**2 - self.initialInputs['ID_fuel']**2) / 4
+
+        geodf = pd.read_csv('src/Regression/burnback_table.csv')
+        cross_section_area = geodf['area'].iloc[0]
+        circle_area = np.pi * (self.initialInputs['OD_fuel']**2) / 4
+        mf_i = self.initialInputs['rho_fuel'] * self.initialInputs['L_fuel'] * (circle_area - cross_section_area)
+        self.r_final = geodf['r'].iloc[-1]
+
 
         if self.ZK:
             # Using the ZK model for blowdown
@@ -95,8 +101,8 @@ class Model():
         float: Difference between current radius and half of the fuel outer diameter.
         """
         r = y[5]
-        fuel_OR = self.initialInputs['OD_fuel'] / 2
-        return r - fuel_OR
+        # fuel_OR = self.initialInputs['OD_fuel'] / 2
+        return r - self.r_final
 
     termination_event_radius.terminal = True
 

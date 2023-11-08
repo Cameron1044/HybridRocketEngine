@@ -31,6 +31,7 @@ class CombustionModel():
         self.rho_f = inputs["rho_fuel"]         # Density of the Fuel Grain
         self.Pe = inputs["P_amb"]               # Ambient Pressure, fine until Summerfield Condition
         self.A_t = np.pi*(inputs["d_t"]/2)**2   # Area of the Nozzle Throat
+        self.PeoPc = self.Pe / ToMetric(950, 'psi')              # Constant, choked value of Pe/Pc for representative chamber pressure
         self.alpha = inputs["alpha"]            # Nozzle divergent half-cone angle
 
         self.OF = 1
@@ -56,15 +57,18 @@ class CombustionModel():
         distances = np.sqrt((self.df['OF'] - OF)**2 + (self.df['Pc'] - Pc)**2)
         
         # Find the index of the minimum distance
-        if not distances.isna().all():
-            idx = distances.idxmin()
-            # Extract the corresponding T, k, and M values
-            try:
-                self.T_chmb = self.df.loc[idx, 'T']
-                self.gamma = self.df.loc[idx, 'k']
-                self.M_chmb = self.df.loc[idx, 'M']/1000
-            except:
-                pass
+        self.T_chmb = 3909
+        self.gamma = 1.1846
+        self.M_chmb = 29.614/1000
+        # if not distances.isna().all():
+        #     idx = distances.idxmin()
+        #     # Extract the corresponding T, k, and M values
+        #     try:
+        #         self.T_chmb = self.df.loc[idx, 'T']
+        #         self.gamma = self.df.loc[idx, 'k']
+        #         self.M_chmb = self.df.loc[idx, 'M']/1000
+        #     except:
+        #         pass
 
     def fuelGeometry(self, r):
         # Ensure the DataFrame is sorted by 'r'
@@ -73,7 +77,6 @@ class CombustionModel():
         # Find the indices where 'r' would be inserted to maintain order
         idx_below = self.geodf['r'].searchsorted(r, side='right') - 1
         idx_above = idx_below + 1
-        print(idx_below, idx_above)
 
         # If the exact value is found, return the corresponding 'area' and 'perimeter'
         if idx_below >= 0 and self.geodf.iloc[idx_below]['r'] == r:
