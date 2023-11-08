@@ -31,7 +31,6 @@ class CombustionModel():
         self.rho_f = inputs["rho_fuel"]         # Density of the Fuel Grain
         self.Pe = inputs["P_amb"]               # Ambient Pressure, fine until Summerfield Condition
         self.A_t = np.pi*(inputs["d_t"]/2)**2   # Area of the Nozzle Throat
-        self.PeoPc = self.Pe / ToMetric(750, 'psi')              # Constant, choked value of Pe/Pc for representative chamber pressure
         self.alpha = inputs["alpha"]            # Nozzle divergent half-cone angle
 
         self.OF = 1
@@ -224,14 +223,16 @@ class CombustionModel():
         dmf_dt = self.mfDeriv(dr_dt, A_b)
         self.OFratio(dmo_dt, dmf_dt)
         self.fuelProperties(OF=self.OF, Pc=Pc)
-        dPc_dt = self.PChmbDeriv(A_b, V_chmb, rho_chmb, R_prime, dr_dt, dmo_dt, Pc)
+        dPc_dt = self.PChmbDeriv(A_b, V_chmb, rho_chmb, R_prime, dr_dt, dmo_dt, Pc)        
+        PeoPc = self.Pe / ToMetric(750, 'psi') # Constant, choked value of Pe/Pc for representative chamber pressure
 
+        
         # inside = 2*self.gamma**2/(self.gamma-1) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(self.Pe/Pc)**((self.gamma-1)/self.gamma))
         # if self.Pe > Pc:
         #     print(ToEnglish(self.Pe, "Pa"), ToEnglish(Pc, "Pa"), ToEnglish(dPc_dt, "Pa"), "ERROR")
         # else:
         #     print(ToEnglish(self.Pe, "Pa"), ToEnglish(Pc, "Pa"), ToEnglish(dPc_dt, "Pa"), "OK")
         # self.test += 1
-
-        F = self.nozzlelambda * self.A_t * Pc * np.sqrt( ((2*self.gamma**2)/(self.gamma-1)) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(self.Pe/Pc)**((self.gamma-1)/self.gamma)) )
+        
+        F = self.nozzlelambda * self.A_t * Pc * np.sqrt( ((2*self.gamma**2)/(self.gamma-1)) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(PeoPc)**((self.gamma-1)/self.gamma)) )
         return dr_dt, dmf_dt, dPc_dt, F, self.OF, self.T_chmb, self.M_chmb, self.gamma 
