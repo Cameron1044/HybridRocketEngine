@@ -139,7 +139,7 @@ class Regression():
     
     def runLoop(self):
         base_img = self.generate_grain_geometry()
-        self.showImage(base_img)
+        # self.showImage(base_img)
 
         all_contours = []
         contours = self.find_contour(base_img)
@@ -169,6 +169,7 @@ class Regression():
             contours = self.find_contour(thresholded_img)
 
             if not edgeFlag and (not contours or any(self.contour_intersects_boundary(cont, center, outer_radius) for cont in contours)):
+                break
                 edgeFlag = True
 
             if edgeFlag and (not contours or all(self.contour_intersects_boundary2(cont, center, outer_radius) for cont in contours)):
@@ -200,7 +201,7 @@ class Regression():
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
             cv2.circle(img, center, outer_radius, (0, 0, 255), 3)
             cv2.drawContours(img, contours_masked, -1, (0, 255, 0), 3)
-            self.showImage(img)
+            # self.showImage(img)
 
         df.to_csv("src/Regression/burnback_table.csv", index=False)
 
@@ -360,12 +361,12 @@ def ToMetric(value, conversion, n=1):
 
     
 outer_diameter = ToMetric(3.375, 'in')
-inner_diameter = ToMetric(1.5, 'in')
-fin_length = ToMetric(1.25, 'in')
-fin_width = ToMetric(0.2, 'in')
+inner_diameter = ToMetric(2, 'in')
+fin_length = ToMetric(1.4, 'in')
+fin_width = ToMetric(0.5, 'in')
 num_fins = 6
 
-mapDim = 1000
+mapDim = 2500
 finocyl = FinocylGeometry(outer_diameter=outer_diameter, inner_diameter=inner_diameter, num_fins=num_fins, fin_length=fin_length, fin_width=fin_width, mapDim=mapDim, threshold=0.36, diskFilterRadius=40)
 df = finocyl.runLoop()
 
