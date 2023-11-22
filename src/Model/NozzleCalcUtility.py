@@ -14,7 +14,7 @@ Pamb = 12.5 # Ambient pressure at launch site (Fort Collins, CO)
 P0oPe = P0/Pamb
 
 # Geometry
-Dt = 0.5 # Diameter of the Throat [in]
+Dt = 0.4 # Diameter of the Throat [in]
 At = np.pi/4 * Dt**2 # Area of the Throat (Calculated) [in^2]
 
 # Misc
