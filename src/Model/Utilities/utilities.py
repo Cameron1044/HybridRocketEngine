@@ -171,6 +171,6 @@ def plot_graph(title, xlabel, ylabel, *lines):
             
     plt.grid(which='both', linestyle='--', linewidth=0.5)
     plt.legend(loc="best")
-    plt.title(title)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
+    plt.title(title, fontsize=18)
+    plt.xlabel(xlabel, fontsize=14)
+    plt.ylabel(ylabel, fontsize=14)
