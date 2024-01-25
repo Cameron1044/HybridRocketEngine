@@ -139,7 +139,7 @@ class Regression():
     
     def runLoop(self):
         base_img = self.generate_grain_geometry()
-        # self.showImage(base_img)
+        self.showImage(base_img)
 
         all_contours = []
         contours = self.find_contour(base_img)
@@ -159,7 +159,9 @@ class Regression():
         while True:
             # Apply regression
             disk_filtered_img = self.apply_disk_filter(processed_img)
+            # self.showImage(disk_filtered_img)
             thresholded_img = self.apply_threshold(disk_filtered_img)
+            self.showImage(thresholded_img)
 
             mask = np.zeros_like(thresholded_img)
             cv2.circle(mask, center, outer_radius, (255), -1)
@@ -203,7 +205,7 @@ class Regression():
             cv2.drawContours(img, contours_masked, -1, (0, 255, 0), 3)
             # self.showImage(img)
 
-        df.to_csv("src/Regression/burnback_table.csv", index=False)
+        # df.to_csv("src/Regression/burnback_table.csv", index=False)
 
         colored_img = self.draw_all_contours(base_img, all_contours)
         cv2.circle(colored_img, center, outer_diameter // 2, (0, 0, 255), 3)
@@ -365,6 +367,12 @@ inner_diameter = ToMetric(1.5, 'in')
 fin_length = ToMetric(1.4, 'in')
 fin_width = ToMetric(0.35, 'in')
 num_fins = 8
+
+# outer_diameter = ToMetric(2, 'in')
+# inner_diameter = ToMetric(0.5, 'in')
+# fin_length = ToMetric(1.4, 'in')
+# fin_width = ToMetric(0.35, 'in')
+# num_fins = 0
 
 mapDim = 2500
 finocyl = FinocylGeometry(outer_diameter=outer_diameter, inner_diameter=inner_diameter, num_fins=num_fins, fin_length=fin_length, fin_width=fin_width, mapDim=mapDim, threshold=0.36, diskFilterRadius=40)
