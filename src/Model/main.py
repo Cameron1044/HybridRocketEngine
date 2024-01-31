@@ -10,7 +10,7 @@ from Utilities.ChemicalProperties import ChemicalProperties
 from Utilities.Model import Model
 from Utilities.utilities import ToMetric, ToEnglish, plot_graph
 
-# Rhode Setup
+# Use for Rhode Setup
 initialInputs = {
     # Purpose:  Dictionary of Initial Inputs, organized by section
     "T_tank": ToMetric(280, 'K'),
@@ -20,7 +20,7 @@ initialInputs = {
     "V_tank": ToMetric(0.259, 'L'),
     "P_tank": ToMetric(2300, 'psi'),
     #### Injector
-    "A_inj": ToMetric(2.212e-6, 'm^2'),
+    "A_inj": ToMetric(2.279e-6, 'm^2'),
     # "A_inj": ToMetric(3.4e-6, 'm^2'),
     "C_d": ToMetric(0.175, 'unitless'),
     #### Fuel Properties
@@ -37,7 +37,7 @@ initialInputs = {
     "Cylindrical": True,
     "ID_fuel": ToMetric(0.5, 'in'),
     #### Nozzle
-    "d_t": ToMetric(0.346, 'in'),
+    "d_t": ToMetric(0.335, 'in'),
     "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
     ### Ambient Conditions
     "P_amb": ToMetric(102675.3, 'Pa'),
@@ -80,11 +80,11 @@ initialInputs1 = {
 }
 
 # Alternate Fuel Testing
-initialInputs1 = {
+initialInputs2 = {
     # Purpose:  Dictionary of Initial Inputs, organized by section
-    "T_tank": ToMetric(288, 'K'),
+    "T_tank": ToMetric(280, 'K'),
     "m_T": ToMetric(2.1, 'kg'),
-    "m_N2O": ToMetric(2.1, 'kg'),
+    "m_N2O": ToMetric(5, 'lbm'),
     #### Oxidizer Tank
     "V_tank": ToMetric(3, 'L'),
     "P_tank": ToMetric(3000, 'psi'),
