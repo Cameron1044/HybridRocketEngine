@@ -1,27 +1,41 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from nptdms import TdmsFile
 
-# Read the TDMS file
-tdms_file = TdmsFile.read('src/Model/Test_data/Burn_1.tdms')
 
-# Access the specific group
-group = tdms_file['Characteristic_Fire_01_26_2024']
+df = pd.read_csv("src/Model/Test_data/01_30_2024_Collected_data/CSV_Files/Burn_2.csv")
 
-# Extracting data for each channel in the group
-data = {channel.name: channel.data for channel in group.channels()}
+# Time (s)
+# Thrust (lbf)
+# Combustion Chamber Temperature 1 (R)
+# N20 Tank Temperature 1 (R)
+# N20 Tank Pressure (psi)
+# Combustion Chamber Pressure (psi)
+# Combustion Chamber Temperature 2 (R)
+# N20 Tank Temperature 2 (R)
 
-# Creating a Pandas DataFrame from the extracted data
-df = pd.DataFrame(data)
+#find index of max thrust
+max_thrust = df['Thrust (lbf)'].max()
+#cut off dataframe from index 0 to max_index
+max_index = df['Thrust (lbf)'].idxmax()
+# df = df.iloc[max_index+3:-1]
 
-# Plotting Force against its index
-# Assuming that the slope of the pressure ducer is 5000 PSI / 4 V with a weird off set of 1250 PSI
-plt.grid(which='both', linestyle='--', linewidth=0.5)
-plt.plot(df.index, (df['Temperature_1']), label='Force',linewidth=0.5)
-plt.axhline(y=0, linewidth=2, linestyle='--', color='k')
-plt.xlabel('Index (Assumed Equal Time Interval)')
-plt.ylabel('Tank Pressure')
-plt.title('N20 PSI vs. Index')
-plt.legend()
+plt.figure()
+plt.plot(df['Time (s)'], df['Thrust (lbf)'] + 171.165, linewidth=0.1)
+plt.xlabel('Time (s)')
+plt.ylabel('Thrust (lbf)')
+plt.title('Thrust vs Time')
+
+plt.figure()
+plt.plot(df['Time (s)'], df['N20 Tank Pressure (psi)'], linewidth=0.1)
+plt.xlabel('Time (s)')
+plt.ylabel('Pressure (psi)')
+plt.title('Tank Pressure vs Time')
+
+plt.figure()
+plt.plot(df['Time (s)'], df['Combustion Chamber Pressure (psi)'], linewidth=0.1)
+plt.xlabel('Time (s)')
+plt.ylabel('Pressure (psi)')
+plt.title('Chamber Pressure vs Time')
+
 plt.show()

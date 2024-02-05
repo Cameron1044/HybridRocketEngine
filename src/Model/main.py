@@ -15,12 +15,12 @@ initialInputs = {
     # Purpose:  Dictionary of Initial Inputs, organized by section
     "T_tank": ToMetric(280, 'K'),
     "m_T": ToMetric(2.1, 'kg'),
-    "m_N2O": ToMetric(0.4, 'lbm'),
+    "m_N2O": ToMetric(0.5, 'lbm'),
     #### Oxidizer Tank
     "V_tank": ToMetric(0.259, 'L'),
     "P_tank": ToMetric(2300, 'psi'),
     #### Injector
-    "A_inj": ToMetric(2.279e-6, 'm^2'),
+    "A_inj": ToMetric(2.51390206896e-6, 'm^2'),
     # "A_inj": ToMetric(3.4e-6, 'm^2'),
     "C_d": ToMetric(0.175, 'unitless'),
     #### Fuel Properties
@@ -37,7 +37,7 @@ initialInputs = {
     "Cylindrical": True,
     "ID_fuel": ToMetric(0.5, 'in'),
     #### Nozzle
-    "d_t": ToMetric(0.335, 'in'),
+    "d_t": ToMetric(0.277, 'in'),
     "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
     ### Ambient Conditions
     "P_amb": ToMetric(102675.3, 'Pa'),
