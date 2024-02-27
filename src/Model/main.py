@@ -257,109 +257,80 @@ print(f'ZK:        {np.round(IspZK, 3)} [s]')
 print(f'Bernoulli: {np.round(IspBernoulli, 3)} [s]')
 print("\n")
 
-# # Oxidizer and Fuel Masses over Time
-# plot_graph('Rocket Masses Over Time',
-#             'Time (s)',
-#             'Mass (lbm)',
-#             {'y': dfZK['mox'], 'x': dfZK['time'], 'label': 'Oxidizer Mass ZK'},
-#             {'y': dfBe['mox'], 'x': dfBe['time'], 'label': 'Oxidizer Mass Bernoulli'},
-#             {'y': dfZK['mf'], 'x': dfZK['time'], 'label': 'Fuel Mass ZK', 'linestyle': '--', 'color': 'r'},
-#             {'y': dfBe['mf'], 'x': dfBe['time'], 'label': 'Fuel Mass Bernoulli', 'linestyle': ':', 'color': 'g'})
+# Oxidizer and Fuel Masses over Time
+plot_graph('Rocket Masses Over Time',
+            'Time (s)',
+            'Mass (lbm)',
+            {'y': dfZK['mox'], 'x': dfZK['time'], 'label': 'Oxidizer Mass ZK'},
+            {'y': dfBe['mox'], 'x': dfBe['time'], 'label': 'Oxidizer Mass Bernoulli'},
+            {'y': dfZK['mf'], 'x': dfZK['time'], 'label': 'Fuel Mass ZK', 'linestyle': '--', 'color': 'r'},
+            {'y': dfBe['mf'], 'x': dfBe['time'], 'label': 'Fuel Mass Bernoulli', 'linestyle': ':', 'color': 'g'})
 
-# # Rocket Mass Flow Rate over Time
-# plot_graph('Rocket Mass Flow Rate over Time', 
-#            'Time (s)', 
-#            'Mass Flow Rate (lbm/s)',
-#            {'y': dfZK['dmf'], 'x': dfZK['time'], 'label': 'Fuel Mass Flow ZK'},
-#            {'y': dfBe['dmf'], 'x': dfBe['time'], 'label': 'Fuel Mass Flow Bernoulli'},
-#            {'y': dfZK['dmox'], 'x': dfZK['time'], 'label': 'Oxidizer Mass Flow ZK', 'linestyle': '--', 'color': 'r'},
-#            {'y': dfBe['dmox'], 'x': dfBe['time'], 'label': 'Oxidizer Mass Flow Bernoulli', 'linestyle': ':', 'color': 'g'})
+# Rocket Mass Flow Rate over Time
+plot_graph('Rocket Mass Flow Rate over Time', 
+           'Time (s)', 
+           'Mass Flow Rate (lbm/s)',
+           {'y': dfZK['dmf'], 'x': dfZK['time'], 'label': 'Fuel Mass Flow ZK'},
+           {'y': dfBe['dmf'], 'x': dfBe['time'], 'label': 'Fuel Mass Flow Bernoulli'},
+           {'y': dfZK['dmox'], 'x': dfZK['time'], 'label': 'Oxidizer Mass Flow ZK', 'linestyle': '--', 'color': 'r'},
+           {'y': dfBe['dmox'], 'x': dfBe['time'], 'label': 'Oxidizer Mass Flow Bernoulli', 'linestyle': ':', 'color': 'g'})
 
-# # Impulse vs. Time
-# plot_graph('Impulse vs. Time', 
-#            'Time (s)', 
-#            'Total Impulse Produced (lbf-s)',
-#            {'y': dfZK['impulse'], 'x': dfZK['time'], 'label': 'ZK'},
-#            {'y': dfBe['impulse'], 'x': dfBe['time'], 'label': 'Bernoulli'})
+# Impulse vs. Time
+plot_graph('Impulse vs. Time', 
+           'Time (s)', 
+           'Total Impulse Produced (lbf-s)',
+           {'y': dfZK['impulse'], 'x': dfZK['time'], 'label': 'ZK'},
+           {'y': dfBe['impulse'], 'x': dfBe['time'], 'label': 'Bernoulli'})
 
 # Mixture Ratio vs. Time
-# plot_graph('Mixture Ratio vs. Time', 
-#            'Time (s)', 
-#            'O/F Ratio',
-#            {'y': dfZK['OF'], 'x': dfZK['time'], 'label': 'ZK'},
-#            {'y': dfBe['OF'], 'x': dfBe['time'], 'label': 'Bernoulli'})
-
-# Port Radius vs Time
-# if initialInputs['Cylindrical']:
-#     noFuelLine = ToEnglish(initialInputs['OD_fuel']/2, 'm')
-# else:
-#     noFuelLine = ToEnglish(modelBernoulli.r_final, 'm')
-# plot_graph('Port Radius vs Time', 
-#            'Time (s)', 
-#            'Port Radius (in)',
-#            {'y': dfZK['r'], 'x': dfZK['time'], 'label': 'Fuel Grain Port Radius ZK'},
-#            {'y': dfBe['r'], 'x': dfBe['time'], 'label': 'Fuel Grain Port Radius Bernoulli'},
-#            {'y': noFuelLine, 'label': 'Fuel Grain Outer Diameter', 'linestyle': ':', 'color': 'r'})
-
-df = pd.read_csv("src/Model/Test_data/01_31_2024_Collected_data/CSV_Files/Burn_2.csv")
-#find index of max thrust
-max_thrust = df['Thrust (lbf)'].max()
-#cut off dataframe from index 0 to max_index
-max_index = df['Thrust (lbf)'].idxmax()
-df = df.iloc[max_index+0:229500]
-
-# plt.figure()
-# plt.plot(df['Time (s)']-df['Time (s)'].iloc[0], df['N20 Tank Pressure (psi)'], linewidth=0.1, label='Experimental')
-# plt.plot(dfZK['time'], dfZK['Pox'], linewidth=1, label='ZK', linestyle='--')
-# plt.plot(dfBe['time'], dfBe['Pox'], linewidth=1, label='Bernoulli')
-# plt.xlabel('Time (s)')
-# plt.ylabel('Pressure (psi)')
-# plt.title('Tank Pressure vs Time')
-
-# # Rocket Pressures Over Time
-# plot_graph('Rocket Pressures Over Time', 
-#            'Time (s)', 
-#            'Pressure (psi)',
-#            {'y': dfZK['Pc'], 'x': dfZK['time'], 'label': 'Chamber Pressure ZK'},
-#            {'y': dfBe['Pc'], 'x': dfBe['time'], 'label': 'Chamber Pressure Bernoulli'},
-#            {'y': dfZK['Pox'], 'x': dfZK['time'], 'label': 'Oxidizer Tank Pressure ZK', 'linestyle': '--', 'color': 'r'},
-#            {'y': dfBe['Pox'], 'x': dfBe['time'], 'label': 'Oxidizer Tank Pressure Bernoulli', 'linestyle': ':', 'color': 'g'})
-
-# # Thrust vs. Time
-# plot_graph('Thrust vs. Time', 
-#            'Time (s)', 
-#            'Thrust (lbf)',
-#            {'y': dfZK['thrust'], 'x': dfZK['time'], 'label': 'ZK'},
-#            {'y': dfBe['thrust'], 'x': dfBe['time'], 'label': 'Bernoulli'})
-
-# Rocket Pressures Over Time
-plot_graph('Rocket Pressures Over Time', 
+plot_graph('Mixture Ratio vs. Time', 
            'Time (s)', 
-           'Pressure (psi)',
-           {'y': dfZK['Pc'], 'x': dfZK['time'], 'label': 'Chamber Pressure Upper'},
-           {'y': dfBe['Pc'], 'x': dfBe['time'], 'label': 'Chamber Pressure Lower'},
-           {'y': dfZK['Pox'], 'x': dfZK['time'], 'label': 'Oxidizer Tank Pressure Upper', 'linestyle': '--', 'color': 'r'},
-           {'y': dfBe['Pox'], 'x': dfBe['time'], 'label': 'Oxidizer Tank Pressure Lower', 'linestyle': ':', 'color': 'g'})
-
-# Thrust vs. Time
-plot_graph('Thrust vs. Time', 
-           'Time (s)', 
-           'Thrust (lbf)',
-           {'y': dfZK['thrust'], 'x': dfZK['time'], 'label': 'Upper'},
-           {'y': dfBe['thrust'], 'x': dfBe['time'], 'label': 'Lower'})
+           'O/F Ratio',
+           {'y': dfZK['OF'], 'x': dfZK['time'], 'label': 'ZK'},
+           {'y': dfBe['OF'], 'x': dfBe['time'], 'label': 'Bernoulli'})
 
 # Port Radius vs Time
 if initialInputs['Cylindrical']:
     noFuelLine = ToEnglish(initialInputs['OD_fuel']/2, 'm')
 else:
     noFuelLine = ToEnglish(modelBernoulli.r_final, 'm')
-plot_graph('Total Fuel Regression vs Time', 
+plot_graph('Port Radius vs Time', 
            'Time (s)', 
-           'Fuel Regression (in)',
-           {'y': dfZK['r'], 'x': dfZK['time'], 'label': 'Fuel Grain Regression Upper'},
-           {'y': dfBe['r'], 'x': dfBe['time'], 'label': 'Fuel Grain Regression Lower'},
+           'Port Radius (in)',
+           {'y': dfZK['r'], 'x': dfZK['time'], 'label': 'Fuel Grain Port Radius ZK'},
+           {'y': dfBe['r'], 'x': dfBe['time'], 'label': 'Fuel Grain Port Radius Bernoulli'},
            {'y': noFuelLine, 'label': 'Fuel Grain Outer Diameter', 'linestyle': ':', 'color': 'r'})
 
+# df = pd.read_csv("src/Model/Test_data/01_31_2024_Collected_data/CSV_Files/Burn_2.csv")
+# #find index of max thrust
+# max_thrust = df['Thrust (lbf)'].max()
+# #cut off dataframe from index 0 to max_index
+# max_index = df['Thrust (lbf)'].idxmax()
+# df = df.iloc[max_index+0:229500]
+
+# # plt.figure()
+# # plt.plot(df['Time (s)']-df['Time (s)'].iloc[0], df['N20 Tank Pressure (psi)'], linewidth=0.1, label='Experimental')
+# # plt.plot(dfZK['time'], dfZK['Pox'], linewidth=1, label='ZK', linestyle='--')
+# # plt.plot(dfBe['time'], dfBe['Pox'], linewidth=1, label='Bernoulli')
+# # plt.xlabel('Time (s)')
+# # plt.ylabel('Pressure (psi)')
+# # plt.title('Tank Pressure vs Time')
+
+# Rocket Pressures Over Time
+plot_graph('Rocket Pressures Over Time', 
+           'Time (s)', 
+           'Pressure (psi)',
+           {'y': dfZK['Pc'], 'x': dfZK['time'], 'label': 'Chamber Pressure ZK'},
+           {'y': dfBe['Pc'], 'x': dfBe['time'], 'label': 'Chamber Pressure Bernoulli'},
+           {'y': dfZK['Pox'], 'x': dfZK['time'], 'label': 'Oxidizer Tank Pressure ZK', 'linestyle': '--', 'color': 'r'},
+           {'y': dfBe['Pox'], 'x': dfBe['time'], 'label': 'Oxidizer Tank Pressure Bernoulli', 'linestyle': ':', 'color': 'g'})
+
+# Thrust vs. Time
+plot_graph('Thrust vs. Time', 
+           'Time (s)', 
+           'Thrust (lbf)',
+           {'y': dfZK['thrust'], 'x': dfZK['time'], 'label': 'ZK'},
+           {'y': dfBe['thrust'], 'x': dfBe['time'], 'label': 'Bernoulli'})
 plt.show()
 
 # Define a mapping dictionary from old column names to desired column names
