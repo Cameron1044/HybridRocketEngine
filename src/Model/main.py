@@ -15,14 +15,14 @@ initialInputs = {
     # Purpose:  Dictionary of Initial Inputs, organized by section
     "T_tank": ToMetric(280, 'K'),
     "m_T": ToMetric(2.1, 'kg'),
-    "m_N2O": ToMetric(0.5, 'lbm'),
+    "m_N2O": ToMetric(0.4, 'lbm'),
     #### Oxidizer Tank
     "V_tank": ToMetric(0.259, 'L'),
-    "P_tank": ToMetric(2300, 'psi'),
+    "P_tank": ToMetric(1159, 'psi'),
     #### Injector
     "A_inj": ToMetric(2.51390206896e-6, 'm^2'),
     # "A_inj": ToMetric(3.4e-6, 'm^2'),
-    "C_d": ToMetric(0.175, 'unitless'),
+    "C_d": ToMetric(0.25, 'unitless'),
     #### Fuel Properties
     "rho_fuel": ToMetric(2089.83281, 'kg/m^3'),
     "M_chmb": ToMetric(30.169, 'g/mol'),
@@ -37,7 +37,7 @@ initialInputs = {
     "Cylindrical": True,
     "ID_fuel": ToMetric(0.5, 'in'),
     #### Nozzle
-    "d_t": ToMetric(0.277, 'in'),
+    "d_t": ToMetric(0.3, 'in'),
     "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
     ### Ambient Conditions
     "P_amb": ToMetric(102675.3, 'Pa'),
@@ -47,10 +47,47 @@ initialInputs = {
 
 # Aluminum model
 initialInputs1 = {
-    # Purpose:  Dictionary of Initial Inputs, organized by section
-    "T_tank": ToMetric(288, 'K'),
+    ## Purpose:  Dictionary of Initial Inputs, organized by section
+    "T_tank": ToMetric(284.817, 'K'),
     "m_T": ToMetric(2.1, 'kg'),
-    "m_N2O": ToMetric(2.1, 'kg'),
+    "m_N2O": ToMetric(1.5, 'kg'),
+    #### Oxidizer Tank
+    "V_tank": ToMetric(3, 'L'),
+    "P_tank": ToMetric(3500, 'psi'),
+    #### Injector
+    "A_inj": ToMetric(8.70966e-6, 'm^2'),
+    "C_d": ToMetric(0.4, 'unitless'),
+    #### Fuel Properties
+    "rho_fuel": ToMetric(2089.83281, 'kg/m^3'),
+    "M_chmb": ToMetric(30.169, 'g/mol'),
+    "gamma": ToMetric(1.2516, 'unitless'),
+    "T_chmb": ToMetric(4000, 'K'),
+    # "M_chmb": ToMetric(31.071, 'g/mol'),
+    # "gamma": ToMetric(1.2025, 'unitless'),
+    # "T_chmb": ToMetric(3665.0, 'K'),
+    #### Fuel Regression Properties
+    "n": ToMetric(1.681, 'unitless'),
+    "a": ToMetric(9.33E-8, 'unitless'),
+    #### Fuel Grains
+    "L_fuel": ToMetric(10.6, 'in'),
+    "OD_fuel": ToMetric(3.375, 'in'),
+    "Cylindrical": False,
+    ## "ID_fuel": ToMetric(2.75, 'in'),
+    #### Nozzle
+    "d_t": ToMetric(1.0, 'in'),
+    "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
+    #### Ambient Conditions
+    "P_amb": ToMetric(102675.3, 'Pa'),
+    ##### CONSTANTS #####
+    "Ru": ToMetric(8.3143, 'J/(mol*K)'),
+}
+
+# Aluminum model high end prediction
+initialInputs = {
+    ## Purpose:  Dictionary of Initial Inputs, organized by section
+    "T_tank": ToMetric(280, 'K'),
+    "m_T": ToMetric(2.1, 'kg'),
+    "m_N2O": ToMetric(2.2, 'kg'),
     #### Oxidizer Tank
     "V_tank": ToMetric(3, 'L'),
     "P_tank": ToMetric(3000, 'psi'),
@@ -62,18 +99,21 @@ initialInputs1 = {
     "M_chmb": ToMetric(30.169, 'g/mol'),
     "gamma": ToMetric(1.2516, 'unitless'),
     "T_chmb": ToMetric(4000, 'K'),
-    ## Fuel Regression Properties
+    # "M_chmb": ToMetric(31.071, 'g/mol'),
+    # "gamma": ToMetric(1.2025, 'unitless'),
+    # "T_chmb": ToMetric(3665.0, 'K'),
+    #### Fuel Regression Properties
     "n": ToMetric(1.681, 'unitless'),
     "a": ToMetric(9.33E-8, 'unitless'),
-    #### Fuel Grain
+    #### Fuel Grains
     "L_fuel": ToMetric(11.5, 'in'),
     "OD_fuel": ToMetric(3.375, 'in'),
     "Cylindrical": False,
-    "ID_fuel": ToMetric(2.75, 'in'),
+    ## "ID_fuel": ToMetric(2.75, 'in'),
     #### Nozzle
-    "d_t": ToMetric(1.2, 'in'),
+    "d_t": ToMetric(1.3, 'in'),
     "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
-    ### Ambient Conditions
+    #### Ambient Conditions
     "P_amb": ToMetric(102675.3, 'Pa'),
     ##### CONSTANTS #####
     "Ru": ToMetric(8.3143, 'J/(mol*K)'),
@@ -113,6 +153,43 @@ initialInputs2 = {
     #### Nozzle
     "d_t": ToMetric(1.0, 'in'),
     "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
+    ### Ambient Conditions
+    "P_amb": ToMetric(102675.3, 'Pa'),
+    ##### CONSTANTS #####
+    "Ru": ToMetric(8.3143, 'J/(mol*K)'),
+}
+
+# Use for Rhode Setup
+initialInputs1 = {
+    # Purpose:  Dictionary of Initial Inputs, organized by section
+    "T_tank": ToMetric(280, 'K'),
+    "m_T": ToMetric(2.1, 'kg'),
+    "m_N2O": ToMetric(0.3, 'lbm'),
+    #### Oxidizer Tank
+    "V_tank": ToMetric(0.259, 'L'),
+    "P_tank": ToMetric(2900, 'psi'),
+    #### Injector
+    "A_inj": ToMetric(3.0828e-06, 'm^2'),
+    # "A_inj": ToMetric(3.4e-6, 'm^2'),
+    "C_d": ToMetric(0.3, 'unitless'),
+    #### Fuel Properties
+    "rho_fuel": ToMetric(2089.83281, 'kg/m^3'),
+    "M_chmb": ToMetric(30.169, 'g/mol'),
+    "gamma": ToMetric(1.2516, 'unitless'),
+    "T_chmb": ToMetric(4000, 'K'),
+    ## Fuel Regression Properties
+    # "n": ToEnglish(0.3667, 'unitless'),
+    # "a": ToEnglish(3.413500729493111e-05, 'unitless'),
+    "n": ToMetric(1.6386, 'unitless'),
+    "a": ToMetric(9.33E-8, 'unitless'),
+    #### Fuel Grain
+    "L_fuel": ToMetric(5.0, 'in'),
+    "OD_fuel": ToMetric(2, 'in'),
+    "Cylindrical": True,
+    "ID_fuel": ToMetric(0.5, 'in'),
+    #### Nozzle
+    "d_t": ToMetric(0.319, 'in'),
+    "alpha": np.deg2rad(0), # Nozzle Diverging Half-Cone Angle
     ### Ambient Conditions
     "P_amb": ToMetric(102675.3, 'Pa'),
     ##### CONSTANTS #####
@@ -206,39 +283,82 @@ print("\n")
 #            {'y': dfBe['impulse'], 'x': dfBe['time'], 'label': 'Bernoulli'})
 
 # Mixture Ratio vs. Time
-plot_graph('Mixture Ratio vs. Time', 
+# plot_graph('Mixture Ratio vs. Time', 
+#            'Time (s)', 
+#            'O/F Ratio',
+#            {'y': dfZK['OF'], 'x': dfZK['time'], 'label': 'ZK'},
+#            {'y': dfBe['OF'], 'x': dfBe['time'], 'label': 'Bernoulli'})
+
+# Port Radius vs Time
+# if initialInputs['Cylindrical']:
+#     noFuelLine = ToEnglish(initialInputs['OD_fuel']/2, 'm')
+# else:
+#     noFuelLine = ToEnglish(modelBernoulli.r_final, 'm')
+# plot_graph('Port Radius vs Time', 
+#            'Time (s)', 
+#            'Port Radius (in)',
+#            {'y': dfZK['r'], 'x': dfZK['time'], 'label': 'Fuel Grain Port Radius ZK'},
+#            {'y': dfBe['r'], 'x': dfBe['time'], 'label': 'Fuel Grain Port Radius Bernoulli'},
+#            {'y': noFuelLine, 'label': 'Fuel Grain Outer Diameter', 'linestyle': ':', 'color': 'r'})
+
+df = pd.read_csv("src/Model/Test_data/01_31_2024_Collected_data/CSV_Files/Burn_2.csv")
+#find index of max thrust
+max_thrust = df['Thrust (lbf)'].max()
+#cut off dataframe from index 0 to max_index
+max_index = df['Thrust (lbf)'].idxmax()
+df = df.iloc[max_index+0:229500]
+
+# plt.figure()
+# plt.plot(df['Time (s)']-df['Time (s)'].iloc[0], df['N20 Tank Pressure (psi)'], linewidth=0.1, label='Experimental')
+# plt.plot(dfZK['time'], dfZK['Pox'], linewidth=1, label='ZK', linestyle='--')
+# plt.plot(dfBe['time'], dfBe['Pox'], linewidth=1, label='Bernoulli')
+# plt.xlabel('Time (s)')
+# plt.ylabel('Pressure (psi)')
+# plt.title('Tank Pressure vs Time')
+
+# # Rocket Pressures Over Time
+# plot_graph('Rocket Pressures Over Time', 
+#            'Time (s)', 
+#            'Pressure (psi)',
+#            {'y': dfZK['Pc'], 'x': dfZK['time'], 'label': 'Chamber Pressure ZK'},
+#            {'y': dfBe['Pc'], 'x': dfBe['time'], 'label': 'Chamber Pressure Bernoulli'},
+#            {'y': dfZK['Pox'], 'x': dfZK['time'], 'label': 'Oxidizer Tank Pressure ZK', 'linestyle': '--', 'color': 'r'},
+#            {'y': dfBe['Pox'], 'x': dfBe['time'], 'label': 'Oxidizer Tank Pressure Bernoulli', 'linestyle': ':', 'color': 'g'})
+
+# # Thrust vs. Time
+# plot_graph('Thrust vs. Time', 
+#            'Time (s)', 
+#            'Thrust (lbf)',
+#            {'y': dfZK['thrust'], 'x': dfZK['time'], 'label': 'ZK'},
+#            {'y': dfBe['thrust'], 'x': dfBe['time'], 'label': 'Bernoulli'})
+
+# Rocket Pressures Over Time
+plot_graph('Rocket Pressures Over Time', 
            'Time (s)', 
-           'O/F Ratio',
-           {'y': dfZK['OF'], 'x': dfZK['time'], 'label': 'ZK'},
-           {'y': dfBe['OF'], 'x': dfBe['time'], 'label': 'Bernoulli'})
+           'Pressure (psi)',
+           {'y': dfZK['Pc'], 'x': dfZK['time'], 'label': 'Chamber Pressure Upper'},
+           {'y': dfBe['Pc'], 'x': dfBe['time'], 'label': 'Chamber Pressure Lower'},
+           {'y': dfZK['Pox'], 'x': dfZK['time'], 'label': 'Oxidizer Tank Pressure Upper', 'linestyle': '--', 'color': 'r'},
+           {'y': dfBe['Pox'], 'x': dfBe['time'], 'label': 'Oxidizer Tank Pressure Lower', 'linestyle': ':', 'color': 'g'})
+
+# Thrust vs. Time
+plot_graph('Thrust vs. Time', 
+           'Time (s)', 
+           'Thrust (lbf)',
+           {'y': dfZK['thrust'], 'x': dfZK['time'], 'label': 'Upper'},
+           {'y': dfBe['thrust'], 'x': dfBe['time'], 'label': 'Lower'})
 
 # Port Radius vs Time
 if initialInputs['Cylindrical']:
     noFuelLine = ToEnglish(initialInputs['OD_fuel']/2, 'm')
 else:
     noFuelLine = ToEnglish(modelBernoulli.r_final, 'm')
-plot_graph('Port Radius vs Time', 
+plot_graph('Total Fuel Regression vs Time', 
            'Time (s)', 
-           'Port Radius (in)',
-           {'y': dfZK['r'], 'x': dfZK['time'], 'label': 'Fuel Grain Port Radius ZK'},
-           {'y': dfBe['r'], 'x': dfBe['time'], 'label': 'Fuel Grain Port Radius Bernoulli'},
+           'Fuel Regression (in)',
+           {'y': dfZK['r'], 'x': dfZK['time'], 'label': 'Fuel Grain Regression Upper'},
+           {'y': dfBe['r'], 'x': dfBe['time'], 'label': 'Fuel Grain Regression Lower'},
            {'y': noFuelLine, 'label': 'Fuel Grain Outer Diameter', 'linestyle': ':', 'color': 'r'})
-
-# Rocket Pressures Over Time
-plot_graph('Rocket Pressures Over Time', 
-           'Time (s)', 
-           'Pressure (psi)',
-           {'y': dfZK['Pc'], 'x': dfZK['time'], 'label': 'Chamber Pressure ZK'},
-           {'y': dfBe['Pc'], 'x': dfBe['time'], 'label': 'Chamber Pressure Bernoulli'},
-           {'y': dfZK['Pox'], 'x': dfZK['time'], 'label': 'Oxidizer Tank Pressure ZK', 'linestyle': '--', 'color': 'r'},
-           {'y': dfBe['Pox'], 'x': dfBe['time'], 'label': 'Oxidizer Tank Pressure Bernoulli', 'linestyle': ':', 'color': 'g'})
-
-# Thrust vs. Time
-plot_graph('Thrust vs. Time', 
-           'Time (s)', 
-           'Thrust (lbf)',
-           {'y': dfZK['thrust'], 'x': dfZK['time'], 'label': 'ZK'},
-           {'y': dfBe['thrust'], 'x': dfBe['time'], 'label': 'Bernoulli'})
 
 plt.show()
 

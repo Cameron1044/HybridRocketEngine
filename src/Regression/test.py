@@ -139,7 +139,7 @@ class Regression():
     
     def runLoop(self):
         base_img = self.generate_grain_geometry()
-        self.showImage(base_img)
+        # self.showImage(base_img)
 
         all_contours = []
         contours = self.find_contour(base_img)
@@ -161,7 +161,7 @@ class Regression():
             disk_filtered_img = self.apply_disk_filter(processed_img)
             # self.showImage(disk_filtered_img)
             thresholded_img = self.apply_threshold(disk_filtered_img)
-            self.showImage(thresholded_img)
+            # self.showImage(thresholded_img)
 
             mask = np.zeros_like(thresholded_img)
             cv2.circle(mask, center, outer_radius, (255), -1)
@@ -205,7 +205,7 @@ class Regression():
             cv2.drawContours(img, contours_masked, -1, (0, 255, 0), 3)
             # self.showImage(img)
 
-        # df.to_csv("src/Regression/burnback_table.csv", index=False)
+        df.to_csv("src/Regression/burnback_table.csv", index=False)
 
         colored_img = self.draw_all_contours(base_img, all_contours)
         cv2.circle(colored_img, center, outer_diameter // 2, (0, 0, 255), 3)
@@ -363,10 +363,10 @@ def ToMetric(value, conversion, n=1):
 
     
 outer_diameter = ToMetric(3.375, 'in')
-inner_diameter = ToMetric(1.5, 'in')
-fin_length = ToMetric(1.4, 'in')
-fin_width = ToMetric(0.35, 'in')
-num_fins = 8
+inner_diameter = ToMetric(1.0, 'in')
+fin_length = ToMetric(0.9+0.5, 'in')
+fin_width = ToMetric(0.2, 'in')
+num_fins = 6
 
 # outer_diameter = ToMetric(2, 'in')
 # inner_diameter = ToMetric(0.5, 'in')
@@ -379,9 +379,15 @@ finocyl = FinocylGeometry(outer_diameter=outer_diameter, inner_diameter=inner_di
 df = finocyl.runLoop()
 
 plt.figure()
-plt.plot(df['r'], df['area'])
+plt.plot(df['r'], df['area']*1000)
+plt.xlabel('Radius (m)')
+plt.ylabel('Area (m^2)')
+plt.title('Area vs Radius')
 
 plt.figure()
-plt.plot(df['r'], df['perimeter'])
+plt.plot(df['r'], df['perimeter']*1000)
+plt.xlabel('Radius (m)')
+plt.ylabel('Perimeter (m)')
+plt.title('Perimeter vs Radius')
 
 plt.show()

@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 
-df = pd.read_csv("src/Model/Test_data/01_30_2024_Collected_data/CSV_Files/Burn_2.csv")
+df = pd.read_csv("src/Model/Test_data/01_31_2024_Collected_data/CSV_Files/Burn_2.csv")
 
 # Time (s)
 # Thrust (lbf)
@@ -18,7 +18,7 @@ df = pd.read_csv("src/Model/Test_data/01_30_2024_Collected_data/CSV_Files/Burn_2
 max_thrust = df['Thrust (lbf)'].max()
 #cut off dataframe from index 0 to max_index
 max_index = df['Thrust (lbf)'].idxmax()
-# df = df.iloc[max_index+3:-1]
+df = df.iloc[max_index+0:229500]
 
 plt.figure()
 plt.plot(df['Time (s)'], df['Thrust (lbf)'] + 171.165, linewidth=0.1)
