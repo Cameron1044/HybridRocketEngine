@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 Pc =  500 # Pressure of the Combustion Chamber [psi] 
 Pc_arr = np.linspace(Pc, 100)
 P0 = Pc # Since flow is essentially stagnant in combustion chamber, we consider this the total pressure of the flow
-Pamb = 12.5 # Ambient pressure at launch site (Fort Collins, CO)
+Pamb = 12.2 # Ambient pressure at launch site (Fort Collins, CO)
 P0oPe = P0/Pamb
 
 # Geometry
