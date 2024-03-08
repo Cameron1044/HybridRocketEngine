@@ -7,14 +7,14 @@ import matplotlib.pyplot as plt
 ## Inputs/Givens
 
 # Pressures
-Pc =  500 # Pressure of the Combustion Chamber [psi] 
+Pc =  550 # Pressure of the Combustion Chamber [psi] 
 Pc_arr = np.linspace(Pc, 100)
 P0 = Pc # Since flow is essentially stagnant in combustion chamber, we consider this the total pressure of the flow
 Pamb = 12.2 # Ambient pressure at launch site (Fort Collins, CO)
 P0oPe = P0/Pamb
 
 # Geometry
-Dt = 0.4 # Diameter of the Throat [in]
+Dt = 0.9 # Diameter of the Throat [in]
 At = np.pi/4 * Dt**2 # Area of the Throat (Calculated) [in^2]
 
 # Misc
