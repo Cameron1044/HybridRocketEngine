@@ -29,8 +29,9 @@ class CombustionModel():
         self.L = inputs["L_fuel"]               # Length of the Fuel Grain
         self.Ru = inputs["Ru"]                  # Universal Gas Constant
         self.rho_f = inputs["rho_fuel"]         # Density of the Fuel Grain
-        self.Pe = inputs["P_amb"]               # Ambient Pressure, fine until Summerfield Condition
+        self.Pamb = inputs["P_amb"]               # Ambient Pressure, fine until Summerfield Condition
         self.A_t = np.pi*(inputs["d_t"]/2)**2   # Area of the Nozzle Throat
+        self.A_e = np.pi*(inputs["d_e"]/2)**2   # Area of the Nozzle Exit
         self.alpha = inputs["alpha"]            # Nozzle divergent half-cone angle
 
         self.OF = 1
@@ -38,7 +39,6 @@ class CombustionModel():
         self.geodf = pd.read_csv('src/Regression/burnback_table.csv')
         self.points = self.df[['OF', 'Pc']].values
         self.fuelProperties(OF=self.OF, Pc=self.Pe)     # Set the initial fuel properties
-        self.PeoPc = self.Pe/950                        # Calculate constant, choked value of Pe/Pc for representative chamber pressure
         self.nozzlelambda = ((1+np.cos(self.alpha)) / 2 ) # Calculate nozzle correction factor
 
     def OFratio(self, dm_ox, dm_f):
@@ -224,7 +224,8 @@ class CombustionModel():
         self.OFratio(dmo_dt, dmf_dt)
         self.fuelProperties(OF=self.OF, Pc=Pc)
         dPc_dt = self.PChmbDeriv(A_b, V_chmb, rho_chmb, R_prime, dr_dt, dmo_dt, Pc)        
-        PeoPc = self.Pe / ToMetric(750, 'psi') # Constant, choked value of Pe/Pc for representative chamber pressure
+        PeoPc = self.Pamb / ToMetric(500, 'psi') # Constant, choked value of Pe/Pc for representative chamber pressure
+        Pe = PeoPc * Pc # Exit pressure
 
         
         # inside = 2*self.gamma**2/(self.gamma-1) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(self.Pe/Pc)**((self.gamma-1)/self.gamma))
@@ -234,5 +235,5 @@ class CombustionModel():
         #     print(ToEnglish(self.Pe, "Pa"), ToEnglish(Pc, "Pa"), ToEnglish(dPc_dt, "Pa"), "OK")
         # self.test += 1
         
-        F = self.nozzlelambda * self.A_t * Pc * np.sqrt( ((2*self.gamma**2)/(self.gamma-1)) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(PeoPc)**((self.gamma-1)/self.gamma)) )
+        F = self.nozzlelambda * self.A_t * Pc * np.sqrt( ((2*self.gamma**2)/(self.gamma-1)) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(PeoPc)**((self.gamma-1)/self.gamma)) ) + ((Pe - self.Pamb) * self.A_e) 
         return dr_dt, dmf_dt, dPc_dt, F, self.OF, self.T_chmb, self.M_chmb, self.gamma 

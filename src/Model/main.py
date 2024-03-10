@@ -32,8 +32,9 @@ initialInputs = {
     #### Nozzle
     "d_t": ToMetric(1.2, 'in'),
     "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
+    "d_e": ToMetric(2.22, 'in'),
     ### Ambient Conditions
-    "P_amb": ToMetric(102675.3, 'Pa'),
+    "P_amb": ToMetric(12.2, 'psi'),
     ##### CONSTANTS #####
     "Ru": ToMetric(8.3143, 'J/(mol*K)'),
 }
