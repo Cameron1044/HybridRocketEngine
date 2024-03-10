@@ -159,7 +159,9 @@ class Regression():
         while True:
             # Apply regression
             disk_filtered_img = self.apply_disk_filter(processed_img)
+            # self.showImage(disk_filtered_img)
             thresholded_img = self.apply_threshold(disk_filtered_img)
+            # self.showImage(thresholded_img)
 
             mask = np.zeros_like(thresholded_img)
             cv2.circle(mask, center, outer_radius, (255), -1)
@@ -361,19 +363,31 @@ def ToMetric(value, conversion, n=1):
 
     
 outer_diameter = ToMetric(3.375, 'in')
-inner_diameter = ToMetric(1.5, 'in')
-fin_length = ToMetric(1.4, 'in')
-fin_width = ToMetric(0.35, 'in')
-num_fins = 8
+inner_diameter = ToMetric(1.0, 'in')
+fin_length = ToMetric(0.9+0.5, 'in')
+fin_width = ToMetric(0.2, 'in')
+num_fins = 6
+
+# outer_diameter = ToMetric(2, 'in')
+# inner_diameter = ToMetric(0.5, 'in')
+# fin_length = ToMetric(1.4, 'in')
+# fin_width = ToMetric(0.35, 'in')
+# num_fins = 0
 
 mapDim = 2500
 finocyl = FinocylGeometry(outer_diameter=outer_diameter, inner_diameter=inner_diameter, num_fins=num_fins, fin_length=fin_length, fin_width=fin_width, mapDim=mapDim, threshold=0.36, diskFilterRadius=40)
 df = finocyl.runLoop()
 
 plt.figure()
-plt.plot(df['r'], df['area'])
+plt.plot(df['r'], df['area']*1000)
+plt.xlabel('Radius (m)')
+plt.ylabel('Area (m^2)')
+plt.title('Area vs Radius')
 
 plt.figure()
-plt.plot(df['r'], df['perimeter'])
+plt.plot(df['r'], df['perimeter']*1000)
+plt.xlabel('Radius (m)')
+plt.ylabel('Perimeter (m)')
+plt.title('Perimeter vs Radius')
 
 plt.show()

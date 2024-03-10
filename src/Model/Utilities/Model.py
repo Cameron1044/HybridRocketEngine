@@ -50,11 +50,16 @@ class Model():
         # Compute initial mass of fuel grain based on given geometric properties
         # fuel_area = np.pi * (self.initialInputs['OD_fuel']**2 - self.initialInputs['ID_fuel']**2) / 4
 
-        geodf = pd.read_csv('src/Regression/burnback_table.csv')
-        cross_section_area = geodf['area'].iloc[0]
-        circle_area = np.pi * (self.initialInputs['OD_fuel']**2) / 4
-        mf_i = self.initialInputs['rho_fuel'] * self.initialInputs['L_fuel'] * (circle_area - cross_section_area)
-        self.r_final = geodf['r'].iloc[-1]
+        if self.initialInputs['Cylindrical']:
+            mf_i = self.initialInputs['rho_fuel'] * np.pi * self.initialInputs['L_fuel'] * (self.initialInputs['OD_fuel']**2 - self.initialInputs['ID_fuel']**2) / 4
+            r_i = self.initialInputs['ID_fuel'] / 2         # Initial Radius of the Fuel Grain Port [m]
+        else:
+            geodf = pd.read_csv('src/Regression/burnback_table.csv')
+            cross_section_area = geodf['area'].iloc[0]
+            circle_area = np.pi * (self.initialInputs['OD_fuel']**2) / 4
+            mf_i = self.initialInputs['rho_fuel'] * self.initialInputs['L_fuel'] * (circle_area - cross_section_area)
+            self.r_final = geodf['r'].iloc[-1]
+            r_i = 0
 
 
         if self.ZK:
@@ -68,8 +73,7 @@ class Model():
             Pc_i = self.initialInputs["P_amb"]              # Initial Pressure of the Combustion Chamber [Pa]
             # r_i = self.initialInputs['ID_fuel'] / 2         # Initial Radius of the Fuel Grain Port [m]
             self.mt_i = nl_i * self.blowdown.MW_N2O + mf_i          # Initial Total Mass of the Fuel + Oxidizer [kg]
-            self.y0 = [Ti, ng_i, nl_i, mf_i, Pc_i, 0, 0]  # Initial Conditions for the ODE45 Solver
-
+            self.y0 = [Ti, ng_i, nl_i, mf_i, Pc_i, r_i, 0]  # Initial Conditions for the ODE45 Solver
         else:
             # Using the Bernoulli model for blowdown
             self.blowdown = BernoulliModel(self.initialInputs)
@@ -77,8 +81,6 @@ class Model():
             # For calculations of initial mass of liquid oxidizer
             liquidOxidizerFraction = (1 - self.blowdown.ullageFraction)
             densityN2OLiquid = self.blowdown.densityN2OLiquid(self.initialInputs["T_tank"])
-
-
             # Set other initial conditions
             mo_i = self.blowdown.V_tank * liquidOxidizerFraction * densityN2OLiquid # Initial Mass of Liquid Oxidizer [kg]
             Po_i = self.blowdown.P_tank                                             # Initial Pressure of the Oxidizer Tank [Pa]
@@ -86,7 +88,7 @@ class Model():
             Vu_i = self.blowdown.V_tank * self.blowdown.ullageFraction              # Initial Volume of the Ullage [m^3]
             # r_i = self.initialInputs['ID_fuel'] / 2                                 # Initial Radius of the Fuel Grain Port [m]
             self.mt_i = mo_i + mf_i                                                 # Initial Total Mass of the Fuel + Oxidizer [kg]
-            self.y0 = [mo_i, mf_i, Po_i, Pc_i, Vu_i, 0, 0]                        # Initial Conditions for the ODE45 Solver
+            self.y0 = [mo_i, mf_i, Po_i, Pc_i, Vu_i, r_i, 0]                        # Initial Conditions for the ODE45 Solver
 
 
     def termination_event_radius(self, t, y):
@@ -101,8 +103,10 @@ class Model():
         float: Difference between current radius and half of the fuel outer diameter.
         """
         r = y[5]
-        # fuel_OR = self.initialInputs['OD_fuel'] / 2
-        return r - self.r_final
+        if self.initialInputs['Cylindrical']:
+            return r - self.initialInputs['OD_fuel'] / 2
+        else:
+            return r - self.r_final
 
     termination_event_radius.terminal = True
 

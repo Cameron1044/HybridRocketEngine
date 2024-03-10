@@ -108,7 +108,10 @@ class ChemicalProperties():
         n_to = self.m_N2O / self.MW_N2O  # initial total N2O in tank [kmol]
         Vhat_li = self.molarVolumeN2O(self.T_tank)
         P_sato = self.vaporPressureN2O(self.T_tank)
+        # P_sato printed from units of Pa to PSI
+        # print("P_sato: ", P_sato*0.000145038)
         n_go = P_sato * (self.V_tank - Vhat_li * n_to) / (-P_sato * Vhat_li + self.R * self.T_tank)  # initial N2O gas [kmol]
         n_lo = (n_to * self.R * self.T_tank - P_sato * self.V_tank) / (-P_sato * Vhat_li + self.R * self.T_tank)  # initial N2O liquid [kmol]
+        print(n_go/n_to*100, n_lo/n_to*100, n_to/(n_go + n_lo))
         n_Ar = self.P_tank * (self.V_tank - n_lo*Vhat_li)/(self.R*self.T_tank) - n_go
         return n_go, n_lo, n_Ar
