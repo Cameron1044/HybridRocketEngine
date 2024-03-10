@@ -23,7 +23,7 @@ class CombustionModel():
         #
         # Outputs:  self - Input Constants necessary to perform the calculations for Combustion Model
         """
-
+        self.inputs = inputs
         self.a = inputs["a"]                    # Burn Rate Coefficient
         self.n = inputs["n"]                    # Burn Rate Coefficient
         self.L = inputs["L_fuel"]               # Length of the Fuel Grain
@@ -34,9 +34,10 @@ class CombustionModel():
         self.A_t = np.pi*(inputs["d_t"]/2)**2   # Area of the Nozzle Throat
         self.A_e = np.pi*(inputs["d_e"]/2)**2   # Area of the Nozzle Exit
         self.alpha = inputs["alpha"]            # Nozzle divergent half-cone angle
+        self.M_chmb = inputs["M_chmb"]
+        self.T_chmb = inputs["T_chmb"]
+        self.gamma = inputs["gamma"]
 
-        self.OF = 1
-        self.df = pd.read_csv('src/GDL/results.csv')
         self.geodf = pd.read_csv('src/Regression/burnback_table.csv')
         self.points = self.df[['OF', 'Pc']].values
         self.fuelProperties(OF=self.OF, Pc=self.Pe)     # Set the initial fuel properties
@@ -51,24 +52,6 @@ class CombustionModel():
         # Outputs:  OF    - Current Oxidizer to Fuel Mass Flow Ratio
         """
         self.OF = dm_ox / dm_f
-
-    def fuelProperties(self, OF, Pc):
-        # Calculate the Euclidean distance between the given OF, Pc and all rows in the DataFrame
-        distances = np.sqrt((self.df['OF'] - OF)**2 + (self.df['Pc'] - Pc)**2)
-        
-        # Find the index of the minimum distance
-        self.T_chmb = 3909
-        self.gamma = 1.1846
-        self.M_chmb = 29.614/1000
-        # if not distances.isna().all():
-        #     idx = distances.idxmin()
-        #     # Extract the corresponding T, k, and M values
-        #     try:
-        #         self.T_chmb = self.df.loc[idx, 'T']
-        #         self.gamma = self.df.loc[idx, 'k']
-        #         self.M_chmb = self.df.loc[idx, 'M']/1000
-        #     except:
-        #         pass
 
     def fuelGeometry(self, r):
         # Ensure the DataFrame is sorted by 'r'
@@ -127,19 +110,19 @@ class CombustionModel():
         # Take necessary constant valus from init dunder function
         Ru = self.Ru
         L = self.L
-        self.fuelProperties(OF=self.OF, Pc=Pc)
         M_chmb = self.M_chmb
         T_chmb = self.T_chmb
 
         # Calculate the current state of the combustion chamber and fuel grain
         R_prime = Ru / M_chmb
 
-
-        # A_p = np.pi * r**2
-        # A_b = 2 * np.pi * r * L * 2
-        area, perimeter = self.fuelGeometry(r)
-        A_p = area
-        A_b = perimeter * L
+        if self.inputs["Cylindrical"]:
+            A_p = np.pi * r**2
+            A_b = 2 * np.pi * r * L * 2
+        else:
+            area, perimeter = self.fuelGeometry(r)
+            A_p = area
+            A_b = perimeter * L
 
         V_chmb = A_p * L
         rho_chmb = Pc / (R_prime * T_chmb)
@@ -196,7 +179,6 @@ class CombustionModel():
         rho_f = self.rho_f
         A_t = self.A_t
         gam = self.gamma
-        M_chmb = self.M_chmb
         T_chmb = self.T_chmb
 
         # Calculating Fuel Mass relations from gas generation and fuel regression
@@ -223,7 +205,6 @@ class CombustionModel():
         dr_dt = self.fuelRegression(dmo_dt, A_p)
         dmf_dt = self.mfDeriv(dr_dt, A_b)
         self.OFratio(dmo_dt, dmf_dt)
-        self.fuelProperties(OF=self.OF, Pc=Pc)
         dPc_dt = self.PChmbDeriv(A_b, V_chmb, rho_chmb, R_prime, dr_dt, dmo_dt, Pc)        
         PeoPc = self.Pamb / ToMetric(500, 'psi') # Constant, choked value of Pe/Pc for representative chamber pressure
         Pe = PeoPc * Pc # Exit pressure
