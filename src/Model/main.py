@@ -39,6 +39,7 @@ initialInputs = {
     #### Nozzle
     "d_t": ToMetric(0.3, 'in'),
     "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
+    "d_e": ToMetric(0.77, 'in'),
     ### Ambient Conditions
     "P_amb": ToMetric(102675.3, 'Pa'),
     ##### CONSTANTS #####
@@ -74,8 +75,9 @@ initialInputs1 = {
     "Cylindrical": False,
     ## "ID_fuel": ToMetric(2.75, 'in'),
     #### Nozzle
-    "d_t": ToMetric(1.0, 'in'),
+    "d_t": ToMetric(0.889, 'in'),
     "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
+    "d_e": ToMetric(2.3, 'in'),
     #### Ambient Conditions
     "P_amb": ToMetric(102675.3, 'Pa'),
     ##### CONSTANTS #####
@@ -111,8 +113,9 @@ initialInputs = {
     "Cylindrical": False,
     ## "ID_fuel": ToMetric(2.75, 'in'),
     #### Nozzle
-    "d_t": ToMetric(1.3, 'in'),
+    "d_t": ToMetric(0.889, 'in'),
     "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
+    "d_e": ToMetric(2.3, 'in'),
     #### Ambient Conditions
     "P_amb": ToMetric(102675.3, 'Pa'),
     ##### CONSTANTS #####
