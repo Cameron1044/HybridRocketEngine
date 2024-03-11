@@ -47,12 +47,16 @@ class Regression():
         return contours
 
     def draw_all_contours(self, base_img, all_contours):
+        # Check if the image is already in color (3 channels)
+        if len(base_img.shape) == 3 and base_img.shape[2] == 3:
+            colored_img = base_img.copy()
+        else:
+            # Convert the image to a colored one if it's in grayscale
+            colored_img = cv2.cvtColor(base_img, cv2.COLOR_GRAY2BGR)
+
         # Colors for drawing alternating contours
         colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
         
-        # Convert the image to a colored one
-        colored_img = cv2.cvtColor(base_img, cv2.COLOR_GRAY2BGR)
-
         # Draw all contours with alternating colors
         for i, contours in enumerate(all_contours):
             cv2.drawContours(colored_img, contours, -1, colors[i % len(colors)], 1)
@@ -137,9 +141,19 @@ class Regression():
         cv2.waitKey(0)
         cv2.destroyAllWindows()
     
-    def runLoop(self):
+    def runLoop(self, rStop=-1, fuelImagePath=None):
         base_img = self.generate_grain_geometry()
         # self.showImage(base_img)
+        base_img = self.generate_grain_geometry()
+        real_fuel_img = None
+        if fuelImagePath:
+            # Attempt to load the real image of burned fuel
+            real_fuel_img = cv2.imread(fuelImagePath)
+            if real_fuel_img is None:
+                print(f"Warning: Unable to open '{fuelImagePath}'. Check the file path and integrity.")
+            else:
+                # Resize the real image to match the dimensions of the base_img
+                real_fuel_img = cv2.resize(real_fuel_img, (self.mapDim, self.mapDim))
 
         all_contours = []
         contours = self.find_contour(base_img)
@@ -203,11 +217,18 @@ class Regression():
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
             cv2.circle(img, center, outer_radius, (0, 0, 255), 3)
             cv2.drawContours(img, contours_masked, -1, (0, 255, 0), 3)
+            if rStop > 0 and self.mapToLength(r) >= rStop:
+                break
             # self.showImage(img)
 
         df.to_csv("src/Regression/burnback_table.csv", index=False)
 
         colored_img = self.draw_all_contours(base_img, all_contours)
+
+        if real_fuel_img is not None:
+            colored_img = self.draw_all_contours(real_fuel_img, all_contours)  # Pass real_fuel_img instead of base_img
+        else:
+            colored_img = self.draw_all_contours(base_img, all_contours)
         cv2.circle(colored_img, center, outer_diameter // 2, (0, 0, 255), 3)
         self.showImage(colored_img)
 
@@ -376,18 +397,18 @@ num_fins = 6
 
 mapDim = 2500
 finocyl = FinocylGeometry(outer_diameter=outer_diameter, inner_diameter=inner_diameter, num_fins=num_fins, fin_length=fin_length, fin_width=fin_width, mapDim=mapDim, threshold=0.36, diskFilterRadius=40)
-df = finocyl.runLoop()
+df = finocyl.runLoop(rStop=0.003636, fuelImagePath="src/Regression/fuelGrainTop2.png")
 
-plt.figure()
-plt.plot(df['r'], df['area']*1000)
-plt.xlabel('Radius (m)')
-plt.ylabel('Area (m^2)')
-plt.title('Area vs Radius')
+# plt.figure()
+# plt.plot(df['r'], df['area']*1000)
+# plt.xlabel('Radius (m)')
+# plt.ylabel('Area (m^2)')
+# plt.title('Area vs Radius')
 
-plt.figure()
-plt.plot(df['r'], df['perimeter']*1000)
-plt.xlabel('Radius (m)')
-plt.ylabel('Perimeter (m)')
-plt.title('Perimeter vs Radius')
+# plt.figure()
+# plt.plot(df['r'], df['perimeter']*1000)
+# plt.xlabel('Radius (m)')
+# plt.ylabel('Perimeter (m)')
+# plt.title('Perimeter vs Radius')
 
-plt.show()
+# plt.show()

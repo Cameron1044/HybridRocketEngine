@@ -164,7 +164,11 @@ class Model():
         """
         dTo, dng_dt, dnl_dt, Po = self.blowdown.ZKModel(To, ng, nl, Pc)
         dmo_dt = dnl_dt * self.blowdown.MW_N2O
-        dr_dt, dmf_dt, dPc_dt, T, OF, T_chmb, M_chmb, gamma = self.combustion.combustionModel(dmo_dt, Pc, r)
+        if self.initialInputs['ColdFlow']:
+            dr_dt, dmf_dt, dPc_dt, T, OF = 0, 0, 0, 0, 0
+            T_chmb, M_chmb, gamma = self.combustion.T_chmb, self.combustion.M_chmb, self.combustion.gamma
+        else:
+            dr_dt, dmf_dt, dPc_dt, T, OF, T_chmb, M_chmb, gamma = self.combustion.combustionModel(dmo_dt, Pc, r)
         return dTo, dng_dt, dnl_dt, dmf_dt, dPc_dt, dr_dt, T, Po, OF, T_chmb, M_chmb, gamma
 
     def model(self, mo, mf, Po, Pc, Vu, r, I):
@@ -184,7 +188,11 @@ class Model():
         tuple: Differentiated values for oxidizer mass, fuel mass, oxidizer pressure, chamber pressure, ullage volume, radius, and thrust.
         """
         dmo_dt, dPo_dt, dVu_dt = self.blowdown.blowdownModel(Po, Pc, Vu)
-        dr_dt, dmf_dt, dPc_dt, T, OF, T_chmb, M_chmb, gamma = self.combustion.combustionModel(dmo_dt, Pc, r)
+        if self.initialInputs['ColdFlow']:
+            dr_dt, dmf_dt, dPc_dt, T, OF = 0, 0, 0, 0, 0
+            T_chmb, M_chmb, gamma = self.combustion.T_chmb, self.combustion.M_chmb, self.combustion.gamma
+        else:
+            dr_dt, dmf_dt, dPc_dt, T, OF, T_chmb, M_chmb, gamma = self.combustion.combustionModel(dmo_dt, Pc, r)
         return dmo_dt, dmf_dt, dPo_dt, dPc_dt, dVu_dt, dr_dt, T, OF, T_chmb, M_chmb, gamma
 
     def ode_function(self, t, y):
