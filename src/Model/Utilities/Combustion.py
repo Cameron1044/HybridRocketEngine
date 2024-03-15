@@ -26,21 +26,21 @@ class CombustionModel():
         self.inputs = inputs
         self.a = inputs["a"]                    # Burn Rate Coefficient
         self.n = inputs["n"]                    # Burn Rate Coefficient
-        self.L = inputs["L_fuel"]               # Length of the Fuel Grain
+        if self.inputs["GeometryType"] == "Helical":
+            self.L = inputs["HelixLength"]               # Length of the Fuel Grain
+        else:
+            self.L = inputs["L_fuel"]               # Length of the Fuel Grain
         self.Ru = inputs["Ru"]                  # Universal Gas Constant
         self.rho_f = inputs["rho_fuel"]         # Density of the Fuel Grain
-        self.Pamb = inputs["P_amb"]             # Ambient Pressure, fine until Summerfield Condition
-        self.Pe = inputs["P_amb"]               # Initial exit pressure is ambient pressure
+        self.Pe = inputs["P_amb"]               # Ambient Pressure, fine until Summerfield Condition
         self.A_t = np.pi*(inputs["d_t"]/2)**2   # Area of the Nozzle Throat
-        self.A_e = np.pi*(inputs["d_e"]/2)**2   # Area of the Nozzle Exit
         self.alpha = inputs["alpha"]            # Nozzle divergent half-cone angle
         self.M_chmb = inputs["M_chmb"]
         self.T_chmb = inputs["T_chmb"]
         self.gamma = inputs["gamma"]
 
         self.geodf = pd.read_csv('src/Regression/burnback_table.csv')
-        self.points = self.df[['OF', 'Pc']].values
-        self.fuelProperties(OF=self.OF, Pc=self.Pe)     # Set the initial fuel properties
+        self.PeoPc = self.Pe/950                        # Calculate constant, choked value of Pe/Pc for representative chamber pressure
         self.nozzlelambda = ((1+np.cos(self.alpha)) / 2 ) # Calculate nozzle correction factor
 
     def OFratio(self, dm_ox, dm_f):
@@ -116,13 +116,16 @@ class CombustionModel():
         # Calculate the current state of the combustion chamber and fuel grain
         R_prime = Ru / M_chmb
 
-        if self.inputs["Cylindrical"]:
+        if self.inputs["GeometryType"] == "Cylindrical":
             A_p = np.pi * r**2
             A_b = 2 * np.pi * r * L * 2
-        else:
+        elif self.inputs["GeometryType"] == "Custom":
             area, perimeter = self.fuelGeometry(r)
             A_p = area
             A_b = perimeter * L
+        elif self.inputs["GeometryType"] == "Helical":
+            A_p = np.pi * r**2
+            A_b = np.pi * r*2 * L
 
         V_chmb = A_p * L
         rho_chmb = Pc / (R_prime * T_chmb)
@@ -143,6 +146,8 @@ class CombustionModel():
 
         # Define Derivative for Fuel Grain port radius from Marxman Fuel Regression
         dr_dt = a * (-dmo_dt / A_p)**n
+        if self.inputs["GeometryType"] == "Helical":
+            dr_dt = dr_dt * self.inputs["HelixRegressionAmplification"]
         return dr_dt
 
     def mfDeriv(self, dr_dt, A_b):
@@ -206,8 +211,7 @@ class CombustionModel():
         dmf_dt = self.mfDeriv(dr_dt, A_b)
         self.OFratio(dmo_dt, dmf_dt)
         dPc_dt = self.PChmbDeriv(A_b, V_chmb, rho_chmb, R_prime, dr_dt, dmo_dt, Pc)        
-        PeoPc = self.Pamb / ToMetric(500, 'psi') # Constant, choked value of Pe/Pc for representative chamber pressure
-        Pe = PeoPc * Pc # Exit pressure
+        PeoPc = self.Pe / ToMetric(750, 'psi') # Constant, choked value of Pe/Pc for representative chamber pressure
 
         
         # inside = 2*self.gamma**2/(self.gamma-1) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(self.Pe/Pc)**((self.gamma-1)/self.gamma))
@@ -217,5 +221,5 @@ class CombustionModel():
         #     print(ToEnglish(self.Pe, "Pa"), ToEnglish(Pc, "Pa"), ToEnglish(dPc_dt, "Pa"), "OK")
         # self.test += 1
         
-        F = self.nozzlelambda * self.A_t * Pc * np.sqrt( ((2*self.gamma**2)/(self.gamma-1)) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(PeoPc)**((self.gamma-1)/self.gamma)) ) + ((Pe - self.Pamb) * self.A_e) 
+        F = self.nozzlelambda * self.A_t * Pc * np.sqrt( ((2*self.gamma**2)/(self.gamma-1)) * (2/(self.gamma+1))**((self.gamma+1)/(self.gamma-1)) * (1-(PeoPc)**((self.gamma-1)/self.gamma)) )
         return dr_dt, dmf_dt, dPc_dt, F, self.OF, self.T_chmb, self.M_chmb, self.gamma 

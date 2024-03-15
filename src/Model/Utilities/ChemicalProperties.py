@@ -1,5 +1,6 @@
 # Import necessary libraries
 import numpy as np
+import pandas as pd
 
 class ChemicalProperties():
     def __init__(self, T_tank=0, V_tank=0, P_tank=0, m_N2O=0):
@@ -28,11 +29,15 @@ class ChemicalProperties():
         # self.Q2 = 0.27244
         # self.Q3 = 309.57
         # self.Q4 = 0.2882
-
-        self.Q1 = 1.87450233  # molar specific volume of liquid N2O [m**3/kmol] coefficients
-        self.Q2 = 0.221580723
-        self.Q3 = 357.900724
-        self.Q4 = 0.295592424
+        # self.Q1 = 1.87450233  # molar specific volume of liquid N2O [m**3/kmol] coefficients
+        # self.Q2 = 0.221580723
+        # self.Q3 = 357.900724
+        # self.Q4 = 0.295592424
+        self.Q1 = None  # molar specific volume of liquid N2O [m**3/kmol] coefficients
+        self.Q2 = None
+        self.Q3 = None
+        self.Q4 = None
+        self.findQ(self.P_tank)
 
         self.J1 = 2.3215e7 # heat of vaporization of N2O [J/kmol] coefficients
         self.J2 = 0.384 # valid for Temp range [182.3 K - 309.57 K]
@@ -50,9 +55,35 @@ class ChemicalProperties():
         self.E3 = 0
         self.E4 = 0
         self.E5 = 0
+        # 142823.08413285043,-1045.5730123594471,5.8726838774295835,-0.015360922985956878,1.724520511351154e-05
+        # self.E1 = 142823.08413285043
+        # self.E2 = -1045.5730123594471
+        # self.E3 = 5.8726838774295835
+        # self.E4 = -0.015360922985956878
+        # self.E5 = 1.724520511351154e-05
 
         self.n_go, self.n_lo, self.n_Ar = self.initialMoles()
         self.ullageFraction = self.ullageFractionFunc()
+    
+    def findQ(self, pressure):
+        pressure = pressure/6895  # convert pressure from Pa to PSI
+        #round pressure to nearest whole number
+        pressure = round(pressure)
+        try:
+            q_values_df = pd.read_csv('src/Model/NistDataProc/data/Q_values.csv')
+        except FileNotFoundError:
+            raise FileNotFoundError("The Q values file could not be found.")
+        
+        if pressure in q_values_df['Pressure'].values:
+            params = q_values_df[q_values_df['Pressure'] == pressure].iloc[0]
+        else:
+            closest_pressure = q_values_df.iloc[(q_values_df['Pressure'] - pressure).abs().argsort()[:1]]
+            print(f"Taking the closest pressure value of {closest_pressure['Pressure'].values[0]}.")
+            params = closest_pressure.iloc[0]
+        self.Q1 = params['Q1']
+        self.Q2 = params['Q2']
+        self.Q3 = params['Q3']
+        self.Q4 = params['Q4']
 
     def molarVolumeN2O(self, T):
         Vhat_li = self.Q2**(1 + (1 - T / self.Q3)**self.Q4) / self.Q1  # molar volume of liquid N2O [m**3/kmol]
@@ -82,6 +113,7 @@ class ChemicalProperties():
     
     def specificHeatArgon(self, T):
         CVhat_Ar = self.C1 + self.C2*T + self.C3*T**2 + self.C4*T**3 + self.C5*T**4 - self.R
+        CVhat_Ar = CVhat_Ar*2
         return CVhat_Ar
     
     def heatVaporizationN2O(self, T):
@@ -110,6 +142,7 @@ class ChemicalProperties():
         P_sato = self.vaporPressureN2O(self.T_tank)
         # P_sato printed from units of Pa to PSI
         # print("P_sato: ", P_sato*0.000145038)
+        print(self.specificHeatN2OLiquid(self.T_tank))
         n_go = P_sato * (self.V_tank - Vhat_li * n_to) / (-P_sato * Vhat_li + self.R * self.T_tank)  # initial N2O gas [kmol]
         n_lo = (n_to * self.R * self.T_tank - P_sato * self.V_tank) / (-P_sato * Vhat_li + self.R * self.T_tank)  # initial N2O liquid [kmol]
         print(n_go/n_to*100, n_lo/n_to*100, n_to/(n_go + n_lo))

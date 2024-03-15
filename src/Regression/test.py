@@ -235,29 +235,26 @@ class Regression():
         return df
     
 class StarGeometry(Regression):
-    def __init__(self, outer_diameter, num_points, point_length, point_base_width, mapDim=1000, threshold=0.36, diskFilterRadius=20):
+    def __init__(self, outer_diameter, num_points, point_length, point_base_width, offset=(0,0), mapDim=1000, threshold=0.36, diskFilterRadius=20):
         super().__init__(outer_diameter, mapDim, threshold, diskFilterRadius)
         self.outer_diameter = outer_diameter
         self.num_points = num_points
         self.point_length = point_length
         self.point_base_width = point_base_width
+        self.offset = offset
 
     def generate_grain_geometry(self):
-        outer_diameter = self.outer_diameter
         num_points = self.num_points
-        point_length = self.point_length
-        point_base_width = self.point_base_width
+        point_length = self.normalize(self.point_length)
+        point_base_width = self.normalize(self.point_base_width)
+        offsetX = self.normalize(self.offset[0])
+        offsetY = self.normalize(self.offset[1])
 
         # Create a white image of the desired dimensions
-        buffer_outer_diameter = math.ceil(outer_diameter * 1.2)
-        img = np.ones((buffer_outer_diameter, buffer_outer_diameter), dtype=np.uint8) * 0
+        img = np.ones((mapDim, mapDim), dtype=np.uint8) * 0
         
-        # Calculate the center of the image
-        center = (img.shape[0] // 2, img.shape[1] // 2)
-        
-        y, x = np.ogrid[-center[0]:img.shape[0]-center[0], -center[1]:img.shape[1]-center[1]]
-        mapX = x / outer_diameter
-        mapY = y / outer_diameter
+        mapX = self.mapX - offsetX
+        mapY = self.mapY + offsetY
         
         for i in range(0, num_points):
             theta = 2 * np.pi / num_points * i
@@ -383,11 +380,17 @@ def ToMetric(value, conversion, n=1):
     return value * conversionDict[conversion]
 
     
+# outer_diameter = ToMetric(3.375, 'in')
+# inner_diameter = ToMetric(1.0, 'in')
+# fin_length = ToMetric(0.9+0.5, 'in')
+# fin_width = ToMetric(0.2, 'in')
+# num_fins = 6
+d = 2
 outer_diameter = ToMetric(3.375, 'in')
-inner_diameter = ToMetric(1.0, 'in')
-fin_length = ToMetric(0.9+0.5, 'in')
-fin_width = ToMetric(0.2, 'in')
-num_fins = 6
+inner_diameter = ToMetric(d, 'in')
+fin_length = ToMetric(0.2+d/2, 'in')
+fin_width = ToMetric(0.5, 'in')
+num_fins = 8
 
 # outer_diameter = ToMetric(2, 'in')
 # inner_diameter = ToMetric(0.5, 'in')
@@ -395,9 +398,18 @@ num_fins = 6
 # fin_width = ToMetric(0.35, 'in')
 # num_fins = 0
 
+num_points = ToMetric(6, 'unitless')
+point_length = ToMetric(1, 'in')
+point_base_width = ToMetric(1, 'in')
+offset = (ToMetric(0.2, 'in'), ToMetric(0.2, 'in'))
+
+# mapDim = 2500
+# star = StarGeometry(outer_diameter=outer_diameter, num_points=num_points, point_length=point_length, point_base_width=point_base_width, mapDim=mapDim, offset=offset, threshold=0.36, diskFilterRadius=40)
+# df = star.runLoop()#(rStop=0.003636)#, fuelImagePath="src/Regression/fuelGrainTop2.png")
+
 mapDim = 2500
 finocyl = FinocylGeometry(outer_diameter=outer_diameter, inner_diameter=inner_diameter, num_fins=num_fins, fin_length=fin_length, fin_width=fin_width, mapDim=mapDim, threshold=0.36, diskFilterRadius=40)
-df = finocyl.runLoop(rStop=0.003636, fuelImagePath="src/Regression/fuelGrainTop2.png")
+df = finocyl.runLoop(rStop=-1)#, fuelImagePath="src/Regression/fuelGrainTop2.png")
 
 # plt.figure()
 # plt.plot(df['r'], df['area']*1000)

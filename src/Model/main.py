@@ -10,224 +10,119 @@ from Utilities.ChemicalProperties import ChemicalProperties
 from Utilities.Model import Model
 from Utilities.utilities import ToMetric, ToEnglish, plot_graph
 
-# Use for Rhode Setup
-initialInputs = {
-    # Purpose:  Dictionary of Initial Inputs, organized by section
-    "T_tank": ToMetric(280, 'K'),
-    "m_T": ToMetric(2.1, 'kg'),
-    "m_N2O": ToMetric(0.4, 'lbm'),
-    #### Oxidizer Tank
-    "V_tank": ToMetric(0.259, 'L'),
-    "P_tank": ToMetric(1159, 'psi'),
-    #### Injector
-    "A_inj": ToMetric(2.51390206896e-6, 'm^2'),
-    # "A_inj": ToMetric(3.4e-6, 'm^2'),
-    "C_d": ToMetric(0.25, 'unitless'),
-    #### Fuel Properties
-    "rho_fuel": ToMetric(2089.83281, 'kg/m^3'),
-    "M_chmb": ToMetric(30.169, 'g/mol'),
-    "gamma": ToMetric(1.2516, 'unitless'),
-    "T_chmb": ToMetric(4000, 'K'),
-    ## Fuel Regression Properties
-    "n": ToMetric(1.681, 'unitless'),
-    "a": ToMetric(9.33E-8, 'unitless'),
-    #### Fuel Grain
-    "L_fuel": ToMetric(5.5, 'in'),
-    "OD_fuel": ToMetric(2, 'in'),
-    "Cylindrical": True,
-    "ID_fuel": ToMetric(0.5, 'in'),
-    #### Nozzle
-    "d_t": ToMetric(0.3, 'in'),
-    "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
-    "d_e": ToMetric(0.77, 'in'),
-    ### Ambient Conditions
-    "P_amb": ToMetric(102675.3, 'Pa'),
-    ##### CONSTANTS #####
-    "Ru": ToMetric(8.3143, 'J/(mol*K)'),
-}
+# # Aluminum Model Helical
+# initialInputs = {
+#     ## Purpose:  Dictionary of Initial Inputs, organized by section
+#     "ColdFlow": False,
+#     "T_tank": ToMetric(270, 'K'),
+#     "m_T": ToMetric(2.1, 'kg'),
+#     "m_N2O": ToMetric(2.6, 'kg'),
+#     #### Oxidizer Tank
+#     "V_tank": ToMetric(3, 'L'),
+#     "P_tank": ToMetric(2200, 'psi'),
+#     #### Injector
+#     # "A_inj": ToMetric(1.8e-5, 'm^2'),
+#     "A_inj": ToMetric(0.038, 'in^2'),
+#     "C_d": ToMetric(0.2, 'unitless'),
+#     #### Fuel Properties
+#     "rho_fuel": ToMetric(2089.83281, 'kg/m^3'),
+#     # "M_chmb": ToMetric(30.169, 'g/mol'),
+#     # "gamma": ToMetric(1.2516, 'unitless'),
+#     # "T_chmb": ToMetric(4000, 'K'),
+#     "M_chmb": ToMetric(23.719, 'g/mol'),
+#     "gamma": ToMetric(1.2641, 'unitless'),
+#     "T_chmb": ToMetric(3075, 'K'),
+#     #### Fuel Regression Properties
+#     "n": ToMetric(1.681, 'unitless'),
+#     "a": ToMetric(9.33E-8, 'unitless'),
+#     #### Fuel Grains
+#     "L_fuel": ToMetric(9, 'in'),
+#     "OD_fuel": ToMetric(3.375, 'in'),
+#     #### Nozzle
+#     "d_t": ToMetric(0.7, 'in'),
+#     "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
+#     #### Ambient Conditions
+#     "P_amb": ToMetric(102675.3, 'Pa'),
+#     # "P_amb": ToMetric(827371, 'Pa'),
+#     ##### CONSTANTS #####
+#     "Ru": ToMetric(8.3143, 'J/(mol*K)'),
+#     #### ----- Geometry Type ----- ####
+#     "GeometryType": "Helical",
+#     #### FOR CYLINDRICAL
+#     "ID_fuel": ToMetric(2.75, 'in'),
+#     #### FOR HELIX
+#     "HelixLength": ToMetric(11.793, 'in'),
+#     "HelixPortDiameter": ToMetric(1.5, 'in'),
+#     "HelixVolume": ToMetric(59.677, 'in^3'),
+#     "HelixRegressionAmplification": 2.0,
+# }
 
-# Aluminum model
+# Aluminum Model Custom
 initialInputs = {
     ## Purpose:  Dictionary of Initial Inputs, organized by section
     "ColdFlow": False,
     "T_tank": ToMetric(270, 'K'),
     "m_T": ToMetric(2.1, 'kg'),
-    "m_N2O": ToMetric(1.5, 'kg'),
+    "m_N2O": ToMetric(2.6, 'kg'),
     #### Oxidizer Tank
     "V_tank": ToMetric(3, 'L'),
-    "P_tank": ToMetric(2080, 'psi'),
+    "P_tank": ToMetric(3500, 'psi'),
     #### Injector
-    "A_inj": ToMetric(4.0794e-05, 'm^2'),
-    "C_d": ToMetric(0.01, 'unitless'),
+    # "A_inj": ToMetric(1.8e-5, 'm^2'),
+    "A_inj": ToMetric(0.038, 'in^2'),
+    "C_d": ToMetric(0.2, 'unitless'),
     #### Fuel Properties
     "rho_fuel": ToMetric(2089.83281, 'kg/m^3'),
-    "M_chmb": ToMetric(30.169, 'g/mol'),
-    "gamma": ToMetric(1.2516, 'unitless'),
-    "T_chmb": ToMetric(4000, 'K'),
-    # "M_chmb": ToMetric(31.071, 'g/mol'),
-    # "gamma": ToMetric(1.2025, 'unitless'),
-    # "T_chmb": ToMetric(3665.0, 'K'),
+    # "M_chmb": ToMetric(30.169, 'g/mol'),
+    # "gamma": ToMetric(1.2516, 'unitless'),
+    # "T_chmb": ToMetric(4000, 'K'),
+    "M_chmb": ToMetric(23.719, 'g/mol'),
+    "gamma": ToMetric(1.2641, 'unitless'),
+    "T_chmb": ToMetric(3075, 'K'),
     #### Fuel Regression Properties
     "n": ToMetric(1.681, 'unitless'),
     "a": ToMetric(9.33E-8, 'unitless'),
     #### Fuel Grains
-    "L_fuel": ToMetric(10.6, 'in'),
+    "L_fuel": ToMetric(9, 'in'),
     "OD_fuel": ToMetric(3.375, 'in'),
-    "Cylindrical": False,
-    ## "ID_fuel": ToMetric(2.75, 'in'),
     #### Nozzle
-<<<<<<< HEAD
-    "d_t": ToMetric(0.889, 'in'),
-=======
-    "d_t": ToMetric(0.9, 'in'),
->>>>>>> 4e040a5 (rebase)
+    "d_t": ToMetric(0.6, 'in'),
     "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
-    "d_e": ToMetric(2.3, 'in'),
     #### Ambient Conditions
     "P_amb": ToMetric(102675.3, 'Pa'),
+    # "P_amb": ToMetric(827371, 'Pa'),
     ##### CONSTANTS #####
     "Ru": ToMetric(8.3143, 'J/(mol*K)'),
+    #### ----- Geometry Type ----- ####
+    "GeometryType": "Custom",
+    #### FOR CYLINDRICAL
+    "ID_fuel": ToMetric(2.75, 'in'),
+    #### FOR HELIX
+    "HelixLength": ToMetric(11.793, 'in'),
+    "HelixPortDiameter": ToMetric(1.5, 'in'),
+    "HelixVolume": ToMetric(59.677, 'in^3'),
+    "HelixRegressionAmplification": 2.0,
 }
 
-<<<<<<< HEAD
-# Aluminum model high end prediction
-initialInputs = {
-    ## Purpose:  Dictionary of Initial Inputs, organized by section
-    "T_tank": ToMetric(280, 'K'),
-    "m_T": ToMetric(2.1, 'kg'),
-    "m_N2O": ToMetric(2.2, 'kg'),
-    #### Oxidizer Tank
-    "V_tank": ToMetric(3, 'L'),
-    "P_tank": ToMetric(3000, 'psi'),
-    #### Injector
-    "A_inj": ToMetric(1.8e-5, 'm^2'),
-    "C_d": ToMetric(0.4, 'unitless'),
-    #### Fuel Properties
-    "rho_fuel": ToMetric(2089.83281, 'kg/m^3'),
-    "M_chmb": ToMetric(30.169, 'g/mol'),
-    "gamma": ToMetric(1.2516, 'unitless'),
-    "T_chmb": ToMetric(4000, 'K'),
-    # "M_chmb": ToMetric(31.071, 'g/mol'),
-    # "gamma": ToMetric(1.2025, 'unitless'),
-    # "T_chmb": ToMetric(3665.0, 'K'),
-    #### Fuel Regression Properties
-    "n": ToMetric(1.681, 'unitless'),
-    "a": ToMetric(9.33E-8, 'unitless'),
-    #### Fuel Grains
-    "L_fuel": ToMetric(11.5, 'in'),
-    "OD_fuel": ToMetric(3.375, 'in'),
-    "Cylindrical": False,
-    ## "ID_fuel": ToMetric(2.75, 'in'),
-    #### Nozzle
-    "d_t": ToMetric(0.889, 'in'),
-    "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
-    "d_e": ToMetric(2.3, 'in'),
-    #### Ambient Conditions
-    "P_amb": ToMetric(102675.3, 'Pa'),
-    ##### CONSTANTS #####
-    "Ru": ToMetric(8.3143, 'J/(mol*K)'),
-}
-
-# Alternate Fuel Testing
-initialInputs2 = {
-    # Purpose:  Dictionary of Initial Inputs, organized by section
-    "T_tank": ToMetric(280, 'K'),
-    "m_T": ToMetric(2.1, 'kg'),
-    "m_N2O": ToMetric(5, 'lbm'),
-    #### Oxidizer Tank
-    "V_tank": ToMetric(3, 'L'),
-    "P_tank": ToMetric(3000, 'psi'),
-    #### Injector
-    "A_inj": ToMetric(1.8e-5, 'm^2'),
-    "C_d": ToMetric(0.4, 'unitless'),
-    #### Fuel Properties
-    "rho_fuel": ToMetric(920, 'kg/m^3'),
-    "M_chmb": ToEnglish(23.719/1000, 'unitless'),
-    "gamma": ToEnglish(1.2641, 'unitless'),
-    "T_chmb": ToEnglish(3075, 'unitless'),
-    ## Fuel Regression Properties
-    # "n": ToMetric(1.6386, 'unitless'),
-    # "a": ToMetric(9.33E-8, 'unitless'),
-    # "n": ToEnglish(0.3667, 'unitless'),
-    # "a": ToEnglish(3.413500729493111e-05, 'unitless'),
-    # "n": ToEnglish(0.57, 'unitless'),
-    # "a": ToEnglish(9.2e-05, 'unitless'),
-    "n": ToEnglish(0.67, 'unitless'),
-    "a": ToEnglish(0.104/1000, 'unitless'),
-    #### Fuel Grain
-    "L_fuel": ToMetric(11.5, 'in'),
-    "OD_fuel": ToMetric(3.375, 'in'),
-    "Cylindrical": True,
-    "ID_fuel": ToMetric(2, 'in'),
-    #### Nozzle
-    "d_t": ToMetric(1.0, 'in'),
-    "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
-    "d_e": ToMetric(2.22, 'in'),
-    ### Ambient Conditions
-    "P_amb": ToMetric(12.2, 'psi'),
-    ##### CONSTANTS #####
-    "Ru": ToMetric(8.3143, 'J/(mol*K)'),
-}
-
-# Use for Rhode Setup
-initialInputs1 = {
-    # Purpose:  Dictionary of Initial Inputs, organized by section
-    "T_tank": ToMetric(280, 'K'),
-    "m_T": ToMetric(2.1, 'kg'),
-    "m_N2O": ToMetric(0.3, 'lbm'),
-    #### Oxidizer Tank
-    "V_tank": ToMetric(0.259, 'L'),
-    "P_tank": ToMetric(2900, 'psi'),
-    #### Injector
-    "A_inj": ToMetric(3.0828e-06, 'm^2'),
-    # "A_inj": ToMetric(3.4e-6, 'm^2'),
-    "C_d": ToMetric(0.3, 'unitless'),
-    #### Fuel Properties
-    "rho_fuel": ToMetric(2089.83281, 'kg/m^3'),
-    "M_chmb": ToMetric(30.169, 'g/mol'),
-    "gamma": ToMetric(1.2516, 'unitless'),
-    "T_chmb": ToMetric(4000, 'K'),
-    ## Fuel Regression Properties
-    # "n": ToEnglish(0.3667, 'unitless'),
-    # "a": ToEnglish(3.413500729493111e-05, 'unitless'),
-    "n": ToMetric(1.6386, 'unitless'),
-    "a": ToMetric(9.33E-8, 'unitless'),
-    #### Fuel Grain
-    "L_fuel": ToMetric(5.0, 'in'),
-    "OD_fuel": ToMetric(2, 'in'),
-    "Cylindrical": True,
-    "ID_fuel": ToMetric(0.5, 'in'),
-    #### Nozzle
-    "d_t": ToMetric(0.319, 'in'),
-    "alpha": np.deg2rad(0), # Nozzle Diverging Half-Cone Angle
-    "d_e": ToMetric(0.319, 'in'),
-    ### Ambient Conditions
-    "P_amb": ToMetric(102675.3, 'Pa'),
-    ##### CONSTANTS #####
-    "Ru": ToMetric(8.3143, 'J/(mol*K)'),
-}
-=======
-# # Aluminum model high end prediction
+# # Aluminum model
 # initialInputs = {
 #     ## Purpose:  Dictionary of Initial Inputs, organized by section
 #     "ColdFlow": False,
-#     "T_tank": ToMetric(280, 'K'),
+#     "T_tank": ToMetric(270, 'K'),
 #     "m_T": ToMetric(2.1, 'kg'),
-#     "m_N2O": ToMetric(2.2, 'kg'),
+#     "m_N2O": ToMetric(1.5, 'kg'),
 #     #### Oxidizer Tank
 #     "V_tank": ToMetric(3, 'L'),
-#     "P_tank": ToMetric(3000, 'psi'),
+#     "P_tank": ToMetric(3500, 'psi'),
 #     #### Injector
-#     "A_inj": ToMetric(1.8e-5, 'm^2'),
-#     "C_d": ToMetric(0.4, 'unitless'),
+#     # "A_inj": ToMetric(1.8e-5, 'm^2'),
+#     "A_inj": ToMetric(0.038, 'in^2'),
+#     "C_d": ToMetric(0.15, 'unitless'),
 #     #### Fuel Properties
 #     "rho_fuel": ToMetric(2089.83281, 'kg/m^3'),
 #     "M_chmb": ToMetric(30.169, 'g/mol'),
 #     "gamma": ToMetric(1.2516, 'unitless'),
 #     "T_chmb": ToMetric(4000, 'K'),
-#     # "M_chmb": ToMetric(31.071, 'g/mol'),
-#     # "gamma": ToMetric(1.2025, 'unitless'),
-#     # "T_chmb": ToMetric(3665.0, 'K'),
 #     #### Fuel Regression Properties
 #     "n": ToMetric(1.681, 'unitless'),
 #     "a": ToMetric(9.33E-8, 'unitless'),
@@ -241,47 +136,7 @@ initialInputs1 = {
 #     "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
 #     #### Ambient Conditions
 #     "P_amb": ToMetric(102675.3, 'Pa'),
-#     ##### CONSTANTS #####
-#     "Ru": ToMetric(8.3143, 'J/(mol*K)'),
-# }
-
-# # Alternate Fuel Testing
-# initialInputs = {
-#     # Purpose:  Dictionary of Initial Inputs, organized by section
-#     "ColdFlow": False,
-#     "T_tank": ToMetric(280, 'K'),
-#     "m_T": ToMetric(2.1, 'kg'),
-#     "m_N2O": ToMetric(5, 'lbm'),
-#     #### Oxidizer Tank
-#     "V_tank": ToMetric(3, 'L'),
-#     "P_tank": ToMetric(3000, 'psi'),
-#     #### Injector
-#     "A_inj": ToMetric(1.8e-5, 'm^2'),
-#     "C_d": ToMetric(0.4, 'unitless'),
-#     #### Fuel Properties
-#     "rho_fuel": ToMetric(920, 'kg/m^3'),
-#     "M_chmb": ToEnglish(23.719/1000, 'unitless'),
-#     "gamma": ToEnglish(1.2641, 'unitless'),
-#     "T_chmb": ToEnglish(3075, 'unitless'),
-#     ## Fuel Regression Properties
-#     # "n": ToMetric(1.6386, 'unitless'),
-#     # "a": ToMetric(9.33E-8, 'unitless'),
-#     # "n": ToEnglish(0.3667, 'unitless'),
-#     # "a": ToEnglish(3.413500729493111e-05, 'unitless'),
-#     # "n": ToEnglish(0.57, 'unitless'),
-#     # "a": ToEnglish(9.2e-05, 'unitless'),
-#     "n": ToEnglish(0.67, 'unitless'),
-#     "a": ToEnglish(0.104/1000, 'unitless'),
-#     #### Fuel Grain
-#     "L_fuel": ToMetric(11.5, 'in'),
-#     "OD_fuel": ToMetric(3.375, 'in'),
-#     "Cylindrical": True,
-#     "ID_fuel": ToMetric(2, 'in'),
-#     #### Nozzle
-#     "d_t": ToMetric(1.0, 'in'),
-#     "alpha": np.deg2rad(15), # Nozzle Diverging Half-Cone Angle
-#     ### Ambient Conditions
-#     "P_amb": ToMetric(102675.3, 'Pa'),
+#     # "P_amb": ToMetric(827371, 'Pa'),
 #     ##### CONSTANTS #####
 #     "Ru": ToMetric(8.3143, 'J/(mol*K)'),
 # }
@@ -321,7 +176,6 @@ initialInputs1 = {
 #     ##### CONSTANTS #####
 #     "Ru": ToMetric(8.3143, 'J/(mol*K)'),
 # }
->>>>>>> 4e040a5 (rebase)
 
 pprint.pprint(initialInputs)
 
@@ -356,8 +210,19 @@ peakThrustBernoulli = dfBe['thrust'].max()
 burnTimeZK = dfZK['time'].iloc[-1]
 burnTimeBernoulli = dfBe['time'].iloc[-1]
 
+finalRZK = dfZK['r'].iloc[-1]
+finalRBe = dfBe['r'].iloc[-1]
+initialRZK = dfZK['r'].iloc[0]
+initialRBe = dfBe['r'].iloc[0]
+
 ### Console Output ###
 print("\n")
+print("-------------------- Initial Port Radius -------------------")
+print(f'ZK:        {np.round(initialRZK, 3)} [in]')
+print(f'Bernoulli: {np.round(initialRBe, 3)} [in]')
+print("-------------------- Final Port Radius -------------------")
+print(f'ZK:        {np.round(finalRZK, 3)} [in]')
+print(f'Bernoulli: {np.round(finalRBe, 3)} [in]')
 print("-------------------- Ullage Fraction -------------------")
 print(f'ZK:        {np.round(modelZK.blowdown.ullageFraction, 3)} [unitless]')
 print(f'Bernoulli: {np.round(modelBernoulli.blowdown.ullageFraction, 3)} [unitless]')
@@ -417,10 +282,12 @@ plot_graph('Mixture Ratio vs. Time',
            {'y': dfBe['OF'], 'x': dfBe['time'], 'label': 'Bernoulli'})
 
 # Port Radius vs Time
-if initialInputs['Cylindrical']:
+if initialInputs["GeometryType"] == "Cylindrical":
     noFuelLine = ToEnglish(initialInputs['OD_fuel']/2, 'm')
-else:
+elif initialInputs["GeometryType"] == "Custom":
     noFuelLine = ToEnglish(modelBernoulli.r_final, 'm')
+elif initialInputs["GeometryType"] == "Helical":
+    noFuelLine = ToEnglish(initialInputs['OD_fuel']/2, 'm')
 plot_graph('Port Radius vs Time', 
            'Time (s)', 
            'Port Radius (in)',

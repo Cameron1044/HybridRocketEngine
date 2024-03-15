@@ -50,16 +50,19 @@ class Model():
         # Compute initial mass of fuel grain based on given geometric properties
         # fuel_area = np.pi * (self.initialInputs['OD_fuel']**2 - self.initialInputs['ID_fuel']**2) / 4
 
-        if self.initialInputs['Cylindrical']:
+        if self.initialInputs["GeometryType"] == "Cylindrical":
             mf_i = self.initialInputs['rho_fuel'] * np.pi * self.initialInputs['L_fuel'] * (self.initialInputs['OD_fuel']**2 - self.initialInputs['ID_fuel']**2) / 4
             r_i = self.initialInputs['ID_fuel'] / 2         # Initial Radius of the Fuel Grain Port [m]
-        else:
+        elif self.initialInputs["GeometryType"] == "Custom":
             geodf = pd.read_csv('src/Regression/burnback_table.csv')
             cross_section_area = geodf['area'].iloc[0]
             circle_area = np.pi * (self.initialInputs['OD_fuel']**2) / 4
             mf_i = self.initialInputs['rho_fuel'] * self.initialInputs['L_fuel'] * (circle_area - cross_section_area)
             self.r_final = geodf['r'].iloc[-1]
             r_i = 0
+        elif self.initialInputs["GeometryType"] == "Helical":
+            mf_i = self.initialInputs['rho_fuel'] * self.initialInputs['HelixVolume']
+            r_i = self.initialInputs['HelixPortDiameter'] / 2         # Initial Radius of the Fuel Grain Port [m]
 
 
         if self.ZK:
@@ -103,10 +106,12 @@ class Model():
         float: Difference between current radius and half of the fuel outer diameter.
         """
         r = y[5]
-        if self.initialInputs['Cylindrical']:
+        if self.initialInputs["GeometryType"] == "Cylindrical":
             return r - self.initialInputs['OD_fuel'] / 2
-        else:
+        elif self.initialInputs["GeometryType"] == "Custom":
             return r - self.r_final
+        elif self.initialInputs["GeometryType"] == "Helical":
+            return r - self.initialInputs['OD_fuel'] / 2
 
     termination_event_radius.terminal = True
 
